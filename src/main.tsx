@@ -3,7 +3,10 @@ import './index.css'
 import App from './App.tsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import React from 'react'
-import SignIn from './pages/SignIn.tsx'
+import SignUp from './pages/SignUp.tsx'
+import ForgotPassword from './pages/ForgotPassword.tsx'
+import Dashboard from './pages/Dashboard.tsx'
+import ProtectedRoute from './components/ProtectedRoute.tsx'
 
 const router = createBrowserRouter([
   {
@@ -11,17 +14,22 @@ const router = createBrowserRouter([
     element: <App />,
   },
   {
-    path: '/signIn',
-    element: <SignIn />,
+    path: '/signUp',
+    element: <SignUp />
   },
-  // {
-  //   path: '/signUp',
-  //   element: <SignUp />
-  // },
-  // {
-  //   path: '/panel',
-  //   element: <Panel />
-  // },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />
+  },
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: "/dashboard",
+        element: <Dashboard />,
+      },
+    ],
+  },
   // {
   //   path: '*',
   //   element: <NotFound />
