@@ -12,11 +12,17 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "../ui/button"
+import { Bell } from "lucide-react"
 
-const CustomersAdmin = () => {
+type CustomersAdminProps = {
+    setSection: (section: string) => void
+}
+
+const CustomersAdmin: React.FC<CustomersAdminProps> = ({ setSection }) => {
     const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number }>()
     const [customers, setCustomers] = useState<Array<{ id_pelanggan: number, nama_pelanggan: string, dob: string, email: string, no_telephon: string, id_toko: string }>>()
     const [currentPage, setCurrentPage] = useState(1)
+    const [notifications, setNotifications] = useState<{ read?: boolean }[]>([]);
 
     const navigate = useNavigate()
 
@@ -73,7 +79,32 @@ const CustomersAdmin = () => {
             }
         }
 
+        const getAllNotifications = async () => {
+            try {
+                const response = await fetch("http://localhost:3000/getAllNotifications", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                    }
+                })
+
+                if (!response.ok) {
+                    throw new Error("Get Notifications gagal")
+                }
+
+                const data = await response.json()
+
+                console.log("Notifications", data)
+
+                setNotifications(data.notifications)
+            } catch (error) {
+                console.error(error)
+            }
+        }
+
         getAllCustomers();
+        getAllNotifications();
     }, [])
 
     console.log("Customers", customers)
@@ -81,9 +112,9 @@ const CustomersAdmin = () => {
     function formatDateDDMMYYYY(isoString: string): string {
         const date = new Date(isoString);
 
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const year = date.getUTCFullYear();
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
 
         return `${day}-${month}-${year}`;
     }
@@ -105,13 +136,23 @@ const CustomersAdmin = () => {
                     </Breadcrumb>
                 </div>
 
-                <div className="cursor-pointer flex items-center gap-5 bg-blue-100 px-5 py-2 rounded-md">
-                    <img className="w-10" src={profilePicture} alt="" />
+                <div className="flex items-center gap-10">
+                    <button className="fixed bottom-24 right-5 bg-blue-300 rounded-full p-3 sm:relative sm:bg-transparent sm:p-0 sm:bottom-0 sm:right-0 cursor-pointer" onClick={() => setSection("Notifications")}>
+                        <Bell size={30} />
 
-                    <div>
-                        <p className="font-semibold">{admin?.nama_user}</p>
+                        <div className="absolute -top-3 -right-3 w-7 h-7 bg-white text-blue-900 sm:bg-blue-500 sm:text-white rounded-full flex items-center justify-center">
+                            <p>{notifications.filter((notification) => notification.read === false).length}</p>
+                        </div>
+                    </button>
 
-                        <p>{admin?.id_role === 1 ? "Admin" : "User"}</p>
+                    <div className="cursor-pointer flex items-center gap-5 bg-blue-100 px-5 py-2 rounded-md">
+                        <img className="w-10" src={profilePicture} alt="" />
+
+                        <div>
+                            <p className="font-semibold">{admin?.nama_user}</p>
+
+                            <p>{admin?.id_role === 1 ? "Admin" : "User"}</p>
+                        </div>
                     </div>
                 </div>
             </div>

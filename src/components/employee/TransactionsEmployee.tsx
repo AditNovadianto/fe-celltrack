@@ -1,8 +1,8 @@
+import { useEffect, useState } from "react";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "../ui/breadcrumb"
 import profilePicture from "../../images/profile-picture.png"
-import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { isTokenExpired } from "@/utils/auth"
+import { useNavigate } from "react-router-dom";
+import { isTokenExpired } from "@/utils/auth";
 import {
     Table,
     TableBody,
@@ -12,20 +12,39 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "../ui/button"
-import { Bell, Eye, X } from "lucide-react"
+import { Bell, Box, Check, Eye, ShoppingCart, X } from "lucide-react";
 
-type TransactionsAdminProps = {
+type Item = {
+    id_produk: number | string
+    quantity: number
+    subtotal: number
+    total: number
+}
+
+type TransactionsEmployeeProps = {
     setSection: (section: string) => void
 }
 
-const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => {
-    const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number }>()
+const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection }) => {
+    const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number }>();
     const [transactions, setTransactions] = useState<Array<{ id_transaksi: string, item: { id_produk: string, quantity: string, subtotal: string, total: string }[], tanggal_transaksi: string, quantity: string, subtotal: string, total: string, jenis_transaksi: string }>>()
     const [currentPage, setCurrentPage] = useState(1)
     const [showDetails, setShowDetails] = useState({ id_transaksi: "", visible: false });
+    const [showCreate, setShowCreate] = useState(false);
+    const [products, setProducts] = useState<Array<{
+        id_produk: number, sku_produk: string, kategori_produk: string, nama_produk: string, harga_beli: number, harga_jual: number, stok: number, approved: boolean
+    }>>();
+    const [customers, setCustomers] = useState<Array<{ id_pelanggan: number, nama_pelanggan: string, dob: string, email: string, no_telephon: string, id_toko: string }>>()
+    const [items, setItems] = useState<Item[]>([])
+    const [jenisTransaksi, setJenisTransaksi] = useState("cash")
+    const [tanggalTransaksi, setTanggalTransaksi] = useState("")
+    const [idPelanggan, setIdPelanggan] = useState<number | string>("")
+    const [notification, setNotification] = useState<{ message: string; type: "success" | "error"; visible: boolean; }>({
+        message: "", type: "success", visible: false
+    });
     const [notifications, setNotifications] = useState<{ read?: boolean }[]>([]);
 
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
     useEffect(() => {
         const token = sessionStorage.getItem("token")
@@ -80,6 +99,52 @@ const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => 
             }
         }
 
+        const getAllProducts = async () => {
+            try {
+                const response = await fetch("http://localhost:3000/getAllProducts", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                    }
+                })
+
+                if (!response.ok) {
+                    throw new Error("Get Products gagal")
+                }
+
+                const data = await response.json()
+
+                const products = data.filter((user: any) => user.id_role !== 1);
+
+                setProducts(products)
+            } catch (error) {
+                console.error(error)
+            }
+        }
+
+        const getAllCustomers = async () => {
+            try {
+                const response = await fetch("http://localhost:3000/getAllCustomers", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                    }
+                })
+
+                if (!response.ok) {
+                    throw new Error("Get Customers gagal")
+                }
+
+                const data = await response.json()
+
+                setCustomers(data.customers)
+            } catch (error) {
+                console.error(error)
+            }
+        }
+
         const getAllNotifications = async () => {
             try {
                 const response = await fetch("http://localhost:3000/getAllNotifications", {
@@ -104,9 +169,11 @@ const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => 
             }
         }
 
+        getAllCustomers();
         getAllTransactions();
+        getAllProducts();
         getAllNotifications();
-    }, [])
+    }, [showCreate, showDetails])
 
     console.log("Transactions", transactions)
 
@@ -122,8 +189,73 @@ const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => 
         return `${day}-${month}-${year}`;
     }
 
+    const addItem = (product: any) => {
+        setItems([...items, { id_produk: product.id_produk, quantity: 1, subtotal: Number(product.harga_jual), total: 1 * Number(product.harga_jual) }])
+    }
+
+    const increaseQuantity = (id_produk: number) => {
+        setItems(items.map(item => item.id_produk === id_produk ? { ...item, quantity: Number(item.quantity) + 1, subtotal: Number(item.subtotal), total: Number(item.total) + Number(item.subtotal) } : item))
+    }
+
+    const decreaseQuantity = (id_produk: number) => {
+        setItems(items.map(item => item.id_produk === id_produk ? { ...item, quantity: Number(item.quantity) - 1, subtotal: Number(item.subtotal), total: Number(item.total) - Number(item.subtotal) } : item))
+    }
+
+    console.log(items)
+
+    const createTransactionHandler = async () => {
+        try {
+            const response = await fetch("http://localhost:3000/createTransaction", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                },
+                body: JSON.stringify({
+                    item: items,
+                    tanggal_transaksi: tanggalTransaksi,
+                    quantity: items.reduce((acc, item) => acc + item.quantity, 0),
+                    subtotal: items.reduce((acc, item) => acc + item.subtotal, 0),
+                    total: items.reduce((acc, item) => acc + item.total, 0),
+                    jenis_transaksi: jenisTransaksi || "cash",
+                    id_pelanggan: idPelanggan || 1
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error("Get Products gagal")
+            }
+
+            setItems([])
+            setTanggalTransaksi("")
+            setJenisTransaksi("")
+            setIdPelanggan("")
+
+            setShowCreate(false)
+
+            showNotification("Customer berhasil ditambahkan", "success");
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    const showNotification = (
+        message: string,
+        type: "success" | "error" = "success"
+    ) => {
+        setNotification({
+            message,
+            type,
+            visible: true,
+        });
+
+        setTimeout(() => {
+            setNotification((prev) => ({ ...prev, visible: false }));
+        }, 3000);
+    };
+
     return (
-        <div className="p-5">
+        <div className="p-5 relative h-full md:min-h-screen">
             <div className="flex items-center gap-5 w-full justify-between">
                 <div>
                     <Breadcrumb>
@@ -154,7 +286,7 @@ const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => 
                         <div>
                             <p className="font-semibold">{admin?.nama_user}</p>
 
-                            <p>{admin?.id_role === 1 ? "Admin" : "User"}</p>
+                            <p>{admin?.id_role === 1 ? "Admin" : "Employee"}</p>
                         </div>
                     </div>
                 </div>
@@ -220,13 +352,19 @@ const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => 
                 </div>
             </div>
 
+            <div className="absolute mb-20 lg:mb-0 bottom-5 w-full left-[50%] transform -translate-x-1/2 px-5">
+                <Button onClick={() => setShowCreate(true)} className="cursor-pointer w-full bg-green-500 text-white hover:bg-green-600">
+                    Tambah Transaksi
+                </Button>
+            </div>
+
             {showDetails.visible && (() => {
                 const selectedTransaction = transactions?.find(
                     t => t.id_transaksi === showDetails.id_transaksi
                 )
 
                 return (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="fixed inset-0 bg-black/50 p-5 flex items-center justify-center z-50">
                         <div className="bg-white p-6 rounded-lg w-105">
                             {/* Header */}
                             <div className="flex items-center justify-between mb-4">
@@ -369,8 +507,104 @@ const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => 
                     </div>
                 )
             })()}
+
+            {showCreate && (
+                <div className="fixed inset-0 bg-black/50 p-5 xl:flex xl:items-center xl:justify-center z-50 overflow-y-auto">
+                    <div className="bg-white p-5 rounded-lg w-[90%] lg:w-[80%] m-auto">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-bold">Create Transaction</h2>
+
+                            <Button onClick={() => { setShowCreate(false); setItems([]); setJenisTransaksi(""); setTanggalTransaksi(""); }} className="bg-red-500 hover:bg-red-600 transition-all cursor-pointer">
+                                <X />
+                            </Button>
+                        </div>
+
+                        {/* Products List */}
+                        <p className="mb-2 font-semibold">Pilih Produk:</p>
+
+                        <div className="flex items-center gap-5 flex-wrap justify-center mt-10">
+
+                            {products && products.map((product, index) => (
+                                <div key={index} className="border rounded-md p-2 shadow-2xl">
+                                    <button onClick={() => addItem(product)} className="cursor-pointer flex flex-col justify-center items-center gap-3 p-3 w-62.5">
+                                        <Box size={60} />
+
+                                        <p className="font-semibold text-lg">{product.nama_produk}</p>
+
+                                        <p className="font-semibold">{Number(product.harga_jual).toLocaleString("id-ID")}</p>
+                                    </button>
+
+                                    <div className={`${items.find(item => item.id_produk === product.id_produk) ? 'flex' : 'hidden'} items-center gap-3 mt-2 justify-center`}>
+                                        <Button onClick={() => items.find(item => item.id_produk === product.id_produk)?.quantity === 1 ? setItems(items.filter(item => item.id_produk !== product.id_produk)) : decreaseQuantity(product.id_produk)}>-</Button>
+
+                                        <p>{items.find(item => item.id_produk === product.id_produk)?.quantity || 0}</p>
+
+                                        <Button onClick={() => increaseQuantity(product.id_produk)}>+</Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Tanggal Transaksi */}
+                        <div className="mt-10">
+                            <p className="font-semibold">Tanggal Transaksi</p>
+
+                            <input type="date" className="border rounded-md w-full mt-2 p-2" value={tanggalTransaksi} onChange={(e) => setTanggalTransaksi(e.target.value)} />
+                        </div>
+
+                        {/* Jenis Transaksi */}
+                        <div className="mt-5    ">
+                            <p className="font-semibold">Jenis Transaksi</p>
+
+                            <select className="border rounded-md w-full mt-2 p-2" value={jenisTransaksi} onChange={(e) => setJenisTransaksi(e.target.value)}>
+                                <option value="cash">Cash</option>
+                                <option value="credit">Credit</option>
+                            </select>
+                        </div>
+
+                        {/* Pelanggan */}
+                        <div className="mt-5">
+                            <p className="font-semibold">Pelanggan</p>
+
+                            <select className="border rounded-md w-full mt-2 p-2" value={idPelanggan} onChange={(e) => setIdPelanggan(e.target.value)}>
+                                {customers?.map((customer, index) => (
+                                    <option key={index} value={customer.id_pelanggan}>{customer.nama_pelanggan}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="mt-5 flex items-center gap-3 w-full">
+                            <Button onClick={() => createTransactionHandler()} className="flex-1 h-11 bg-green-500 hover:bg-green-600 transition-all cursor-pointer">
+                                Submit
+                            </Button>
+
+                            <Button size="icon" className="relative h-11 w-11 bg-orange-500 hover:bg-orange-600 transition-all cursor-pointer">
+                                <ShoppingCart className="w-5 h-5" />
+
+                                <div className="absolute -top-4 -right-4 bg-blue-500 text-white rounded-full w-9 h-9 text-base flex items-center justify-center">
+                                    <p>{items.length}</p>
+                                </div>
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {notification.visible && (
+                <div
+                    className={`flex items-center gap-2 fixed bottom-15 right-5 z-50 px-4 py-3 rounded-md shadow-lg text-white transition-all
+                        ${notification.type === "success"
+                            ? "bg-green-500"
+                            : "bg-red-500"
+                        }`}
+                >
+                    {notification.type === "success" ? <Check /> : <X />}
+                    {notification.message}
+                </div>
+            )}
         </div>
     )
 }
 
-export default TransactionsAdmin
+export default TransactionsEmployee

@@ -3,13 +3,18 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "../ui/breadcrumb";
 import profilePicture from "../../images/profile-picture.png"
-import { Box, HandCoins, ReceiptText } from "lucide-react";
+import { Bell, Box, HandCoins, ReceiptText } from "lucide-react";
 
-const DashboardEmployee = () => {
+type DashboardEmployeeProps = {
+    setSection: (section: string) => void
+}
+
+const DashboardEmployee: React.FC<DashboardEmployeeProps> = ({ setSection }) => {
     const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number }>();
     const [totalCostomers, setTotalCostomers] = useState(0);
     const [totalProducts, setTotalProducts] = useState(0);
     const [totalTransactions, setTotalTransactions] = useState(0);
+    const [notifications, setNotifications] = useState<{ read?: boolean }[]>([]);
 
     const navigate = useNavigate();
 
@@ -105,9 +110,34 @@ const DashboardEmployee = () => {
             }
         }
 
+        const getAllNotifications = async () => {
+            try {
+                const response = await fetch("http://localhost:3000/getAllNotifications", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                    }
+                })
+
+                if (!response.ok) {
+                    throw new Error("Get Notifications gagal")
+                }
+
+                const data = await response.json()
+
+                console.log("Notifications", data)
+
+                setNotifications(data.notifications)
+            } catch (error) {
+                console.error(error)
+            }
+        }
+
         getAllCustomers();
         getAllProducts();
         getAllTransactions();
+        getAllNotifications();
     }, [])
 
     return (
@@ -127,13 +157,23 @@ const DashboardEmployee = () => {
                     </Breadcrumb>
                 </div>
 
-                <div className="cursor-pointer flex items-center gap-5 bg-blue-100 px-5 py-2 rounded-md">
-                    <img className="w-10" src={profilePicture} alt="" />
+                <div className="flex items-center gap-10">
+                    <button className="fixed bottom-24 right-5 bg-blue-300 rounded-full p-3 sm:relative sm:bg-transparent sm:p-0 sm:bottom-0 sm:right-0 cursor-pointer" onClick={() => setSection("Notifications")}>
+                        <Bell size={30} />
 
-                    <div>
-                        <p className="font-semibold">{admin?.nama_user}</p>
+                        <div className="absolute -top-3 -right-3 w-7 h-7 bg-white text-blue-900 sm:bg-blue-500 sm:text-white rounded-full flex items-center justify-center">
+                            <p>{notifications.filter((notification) => notification.read === false).length}</p>
+                        </div>
+                    </button>
 
-                        <p>{admin?.id_role === 1 ? "Admin" : "Employee"}</p>
+                    <div className="cursor-pointer flex items-center gap-5 bg-blue-100 px-5 py-2 rounded-md">
+                        <img className="w-10" src={profilePicture} alt="" />
+
+                        <div>
+                            <p className="font-semibold">{admin?.nama_user}</p>
+
+                            <p>{admin?.id_role === 1 ? "Admin" : "Employee"}</p>
+                        </div>
                     </div>
                 </div>
             </div>
