@@ -7,6 +7,7 @@ import SignUp from './pages/SignUp.tsx'
 import ForgotPassword from './pages/ForgotPassword.tsx'
 import Dashboard from './pages/Dashboard.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
+import NotFound from './pages/NotFound.tsx'
 
 const router = createBrowserRouter([
   {
@@ -30,10 +31,10 @@ const router = createBrowserRouter([
       },
     ],
   },
-  // {
-  //   path: '*',
-  //   element: <NotFound />
-  // },
+  {
+    path: '*',
+    element: <NotFound />
+  },
 ], {
   future: {
     v7_startTransition: true,
