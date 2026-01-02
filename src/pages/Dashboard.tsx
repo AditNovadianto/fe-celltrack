@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Box, Building2, HandCoins, LayoutDashboard, LogOut, ReceiptText, UsersRound } from "lucide-react"
+import { Box, Building2, HandCoins, LayoutDashboard, LogOut, ReceiptText, Settings, UsersRound } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import logo from "../images/logo-celltrack.png"
@@ -17,6 +17,8 @@ import TransactionsEmployee from "@/components/employee/TransactionsEmployee"
 import NotificationsUsers from "@/components/NotificationsUsers"
 import NotificationsSuppliers from "@/components/NotificationsSuppliers"
 import ProductsSupplier from "@/components/supplier/ProductsSupplier"
+import ServiceRequestAdmin from "@/components/admin/ServiceRequestAdmin"
+import ServiceRequestEmployee from "@/components/employee/serviceRequestEmployee"
 
 const Dashboard = () => {
     const [section, setSection] = useState("Dashboard")
@@ -66,6 +68,8 @@ const Dashboard = () => {
                         <Button className={`${section === "Suppliers" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Suppliers")}><Building2 /> {!isHovered ? '' : 'Suppliers'}</Button>
 
                         <Button className={`${section === "Transactions" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Transactions")}><ReceiptText /> {!isHovered ? '' : 'Transactions'}</Button>
+
+                        <Button className={`${section === "Services" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Services")}><Settings /> {!isHovered ? '' : 'Services'}</Button>
                     </div>
 
                     <div className={`${user === "Employee" ? 'flex' : 'hidden'} w-full flex-col gap-5`}>
@@ -76,6 +80,8 @@ const Dashboard = () => {
                         <Button className={`${section === "Products" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Products")}><Box /> {!isHovered ? '' : 'Products'}</Button>
 
                         <Button className={`${section === "Transactions" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Transactions")}><ReceiptText /> {!isHovered ? '' : 'Transactions'}</Button>
+
+                        <Button className={`${section === "Services" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Services")}><Settings /> {!isHovered ? '' : 'Services'}</Button>
                     </div>
 
                     <div className={`${user === "Supplier" ? 'flex' : 'hidden'} w-full flex-col gap-5`}>
@@ -105,13 +111,15 @@ const Dashboard = () => {
 
                     {section === "Transactions" && <TransactionsAdmin setSection={setSection} />}
 
+                    {section === "Services" && <ServiceRequestAdmin setSection={setSection} />}
+
                     {section === "Notifications" && <NotificationsUsers setSection={setSection} />}
                 </div>
             )}
 
             {user === "Admin" && (
                 <>
-                    <div className="hidden md:flex lg:hidden items-center justify-between p-5 fixed bottom-0 left-0 right-0 w-full bg-sky-950">
+                    <div className="hidden md:flex lg:hidden items-center justify-between px-2 py-5 fixed bottom-0 left-0 right-0 w-full bg-sky-950">
                         <Button className={`${section === "Dashboard" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Dashboard")}><LayoutDashboard /> Dashboard</Button>
 
                         <Button className={`${section === "Employees" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Employees")}><UsersRound /> Employees</Button>
@@ -123,6 +131,8 @@ const Dashboard = () => {
                         <Button className={`${section === "Suppliers" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Suppliers")}><Building2 /> Suppliers</Button>
 
                         <Button className={`${section === "Transactions" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Transactions")}><ReceiptText /> Transactions</Button>
+
+                        <Button className={`${section === "Services" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Services")}><ReceiptText /> Services</Button>
                     </div>
 
                     <div className="flex md:hidden items-center justify-between w-full p-5 fixed bottom-0 left-0 right-0 bg-sky-950">
@@ -137,6 +147,8 @@ const Dashboard = () => {
                         <Button className={`${section === "Suppliers" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Suppliers")}><Building2 /></Button>
 
                         <Button className={`${section === "Transactions" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Transactions")}><ReceiptText /></Button>
+
+                        <Button className={`${section === "Services" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Services")}><ReceiptText /></Button>
                     </div>
                 </>
             )}
@@ -153,6 +165,8 @@ const Dashboard = () => {
 
                     {section === "Transactions" && <TransactionsEmployee setSection={setSection} />}
 
+                    {section === "Services" && <ServiceRequestEmployee setSection={setSection} />}
+
                     {section === "Notifications" && <NotificationsUsers setSection={setSection} />}
                 </div>
             )}
@@ -167,6 +181,8 @@ const Dashboard = () => {
                         <Button className={`${section === "Products" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Products")}><Box /> Products</Button>
 
                         <Button className={`${section === "Transactions" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Transactions")}><ReceiptText /> Transactions</Button>
+
+                        <Button className={`${section === "Services" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Services")}><ReceiptText /> Services</Button>
                     </div>
 
                     <div className="flex md:hidden items-center justify-between w-full p-5 fixed bottom-0 left-0 right-0 bg-sky-950">
@@ -177,6 +193,8 @@ const Dashboard = () => {
                         <Button className={`${section === "Products" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Products")}><Box /></Button>
 
                         <Button className={`${section === "Transactions" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Transactions")}><ReceiptText /></Button>
+
+                        <Button className={`${section === "Services" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Services")}><ReceiptText /></Button>
                     </div>
                 </>
             )}

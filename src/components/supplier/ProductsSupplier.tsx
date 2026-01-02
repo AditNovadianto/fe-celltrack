@@ -227,11 +227,6 @@ const ProductsSupplier: React.FC<ProductsSupplierProps> = ({ setSection }) => {
                 throw new Error("Store product gagal")
             }
 
-            const data = await response.json()
-
-            // langsung tambah ke tabel
-            setProducts((prev) => prev ? [...prev, data.product] : [data.product])
-
             setShowCreate(false)
             setError({ show: false, message: "" })
             setCreateForm({

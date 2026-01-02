@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "../ui/breadcrumb";
 import profilePicture from "../../images/profile-picture.png"
-import { Bell, Box, HandCoins, ReceiptText } from "lucide-react";
+import { Bell, Box, HandCoins, ReceiptText, Settings } from "lucide-react";
 
 type DashboardEmployeeProps = {
     setSection: (section: string) => void
@@ -14,6 +14,7 @@ const DashboardEmployee: React.FC<DashboardEmployeeProps> = ({ setSection }) => 
     const [totalCostomers, setTotalCostomers] = useState(0);
     const [totalProducts, setTotalProducts] = useState(0);
     const [totalTransactions, setTotalTransactions] = useState(0);
+    const [totalServiceRequests, setTotalServiceRequests] = useState(0);
     const [notifications, setNotifications] = useState<{ readBy?: { role: string, id: number, readAt?: Date; }[] }[]>([]);
 
     const navigate = useNavigate();
@@ -110,6 +111,30 @@ const DashboardEmployee: React.FC<DashboardEmployeeProps> = ({ setSection }) => 
             }
         }
 
+        const getAllServiceRequests = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllServiceRequests`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                    }
+                })
+
+                if (!response.ok) {
+                    throw new Error("Get Service Requests gagal")
+                }
+
+                const data = await response.json()
+
+                console.log("Service Requests", data)
+
+                setTotalServiceRequests(data.length)
+            } catch (error) {
+                console.error(error)
+            }
+        }
+
         const getAllNotifications = async () => {
             try {
                 const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllNotifications`, {
@@ -137,6 +162,7 @@ const DashboardEmployee: React.FC<DashboardEmployeeProps> = ({ setSection }) => 
         getAllCustomers();
         getAllProducts();
         getAllTransactions();
+        getAllServiceRequests();
         getAllNotifications();
     }, [])
 
@@ -215,6 +241,18 @@ const DashboardEmployee: React.FC<DashboardEmployeeProps> = ({ setSection }) => 
                             <p className="font-semibold text-2xl">Total Transactions</p>
 
                             <p className="text-3xl font-semibold">{totalTransactions}</p>
+                        </div>
+                    </div>
+
+                    <div className="hover:scale-103 transition-all cursor-pointer w-full sm:w-[48%] xl:w-[23%] flex items-center gap-5  bg-linear-to-tr from-sky-500 to-blue-500  p-5 rounded-lg text-white mt-5 shadow-lg">
+                        <div className="w-10 h-10 rounded-full bg-slate-400 flex items-center justify-center">
+                            <Settings />
+                        </div>
+
+                        <div>
+                            <p className="font-semibold text-2xl">Total Service Requests</p>
+
+                            <p className="text-3xl font-semibold">{totalServiceRequests}</p>
                         </div>
                     </div>
                 </div>

@@ -165,7 +165,7 @@ const NotificationsUsers: React.FC<NotificationsUsersProps> = ({ setSection }) =
                 </div>
             </div>
 
-            <div className="flex flex-col w-full gap-5 mt-10">
+            <div className="flex flex-col w-full gap-5 mt-10 mb-20 lg:mb-0">
                 {notifications && notifications.map((notification, index) => (
                     <button key={index} onClick={() => { markNotificationAsRead(String(notification._id)) }} className={`${notification.readBy?.some((item) => item.id === admin?.id_user && item.role === "USER") ? 'bg-gray-200' : 'bg-blue-200'} cursor-pointer hover:scale-101 transition-all p-5 rounded-lg shadow-lg`}>
                         <div className="flex items-center gap-5 justify-between w-full">

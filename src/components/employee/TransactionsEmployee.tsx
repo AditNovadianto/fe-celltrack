@@ -80,7 +80,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
     useEffect(() => {
         const getAllTransactions = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllTransactions", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllTransactions`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -102,7 +102,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
 
         const getAllProducts = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllProducts", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllProducts`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -126,7 +126,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
 
         const getAllCustomers = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllCustomers", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllCustomers`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -148,7 +148,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
 
         const getAllNotifications = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllNotifications", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllNotifications`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
