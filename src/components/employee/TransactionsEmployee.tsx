@@ -12,7 +12,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "../ui/button"
-import { Bell, Box, Check, Eye, ShoppingCart, X } from "lucide-react";
+import { Bell, Box, Check, Eye, Receipt, ShoppingCart, X } from "lucide-react";
 
 type Item = {
     id_produk: number | string
@@ -27,7 +27,7 @@ type TransactionsEmployeeProps = {
 
 const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection }) => {
     const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number, id_user?: number }>();
-    const [transactions, setTransactions] = useState<Array<{ id_transaksi: string, item: { id_produk: string, quantity: string, subtotal: string, total: string }[], tanggal_transaksi: string, quantity: string, subtotal: string, total: string, jenis_transaksi: string }>>()
+    const [transactions, setTransactions] = useState<Array<{ id_transaksi: string, invoice_number: string, item: { id_produk: string, quantity: string, subtotal: string, total: string }[], tanggal_transaksi: string, quantity: string, subtotal: string, total: string, jenis_transaksi: string }>>()
     const [currentPage, setCurrentPage] = useState(1)
     const [showDetails, setShowDetails] = useState({ id_transaksi: "", visible: false });
     const [showCreate, setShowCreate] = useState(false);
@@ -44,6 +44,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
     });
     const [notifications, setNotifications] = useState<{ readBy?: { role: string, id: number, readAt?: Date; }[] }[]>([]);
     const [showCommitTransaction, setShowCommitTransaction] = useState(false)
+    const [showBill, setShowBill] = useState({ id_transaksi: "", visible: false })
 
     const navigate = useNavigate();
 
@@ -259,21 +260,18 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
     // 
 
     // Generate Bill
-    const generateBillFilename = () => {
-        const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase()
-        const today = new Date().toISOString().split("T")[0] // YYYY-MM-DD
-        return `BILL-${randomCode}-${today}`
+    function obfuscateInvoice(invoice: string): string {
+        const salt = "trx";
+        return btoa(`${salt}:${invoice}:${Date.now()}`);
     }
 
-    const handleGenerateBill = () => {
+    const handleGenerateBill = (invoiceNumber: string) => {
         const originalTitle = document.title
-        const filename = generateBillFilename()
 
-        document.title = filename
+        document.title = obfuscateInvoice(invoiceNumber)
 
         window.print()
 
-        // kembalikan title setelah print
         setTimeout(() => {
             document.title = originalTitle
         }, 500)
@@ -341,6 +339,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                     <TableHeader>
                         <TableRow>
                             <TableHead>Id Transaksi</TableHead>
+                            <TableHead>Invoice Number</TableHead>
                             <TableHead>Tanggal Transaksi</TableHead>
                             <TableHead>Quantity</TableHead>
                             <TableHead>Sub Total</TableHead>
@@ -353,14 +352,19 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                         {paginatedTransactions && paginatedTransactions.map((transaction) => (
                             <TableRow>
                                 <TableCell className="font-medium">{transaction.id_transaksi}</TableCell>
+                                <TableCell>{transaction.invoice_number}</TableCell>
                                 <TableCell>{formatDateDDMMYYYY(transaction.tanggal_transaksi)}</TableCell>
                                 <TableCell>{transaction.quantity}</TableCell>
                                 <TableCell>{Number(transaction.subtotal).toLocaleString("id-ID")}</TableCell>
                                 <TableCell>{Number(transaction.total).toLocaleString("id-ID")}</TableCell>
                                 <TableCell>{transaction.jenis_transaksi}</TableCell>
-                                <TableCell>
+                                <TableCell className="space-x-2">
                                     <Button onClick={() => setShowDetails({ id_transaksi: transaction.id_transaksi, visible: true })} className="cursor-pointer bg-blue-500 text-white hover:bg-blue-600">
                                         <Eye />
+                                    </Button>
+
+                                    <Button onClick={() => setShowBill({ id_transaksi: transaction.id_transaksi, visible: true })} className="cursor-pointer bg-green-500 text-white hover:bg-green-600">
+                                        <Receipt />
                                     </Button>
                                 </TableCell>
                             </TableRow>
@@ -431,6 +435,13 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                                     <span className="text-gray-600">ID Transaksi</span>
                                     <span className="font-semibold">
                                         {selectedTransaction?.id_transaksi}
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between border-b pb-1">
+                                    <span className="text-gray-600">Invoice Number</span>
+                                    <span className="font-semibold">
+                                        {selectedTransaction?.invoice_number}
                                     </span>
                                 </div>
 
@@ -708,20 +719,129 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                                     >
                                         Commit Transaction
                                     </Button>
-
-                                    {/* Generate Bill */}
-                                    <Button
-                                        className="bg-blue-500 hover:bg-blue-600"
-                                        onClick={handleGenerateBill}
-                                    >
-                                        Generate Bill
-                                    </Button>
                                 </div>
                             </div>
                         </div>
                     )}
                 </div>
             )}
+
+            {showBill.visible && (() => {
+                const selectedBillTransaction = transactions?.find(
+                    t => t.id_transaksi === showBill.id_transaksi
+                )
+
+                if (!selectedBillTransaction) return null
+
+                return (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 print:bg-white">
+                        <div className="bg-white p-6 rounded-lg w-100 print:w-full print:p-0">
+
+                            {/* Header (hidden saat print) */}
+                            <div className="flex items-center justify-between mb-4 print:hidden">
+                                <h2 className="text-lg font-bold">Bill / Receipt</h2>
+
+                                <Button
+                                    size="icon"
+                                    variant="destructive"
+                                    onClick={() =>
+                                        setShowBill({ id_transaksi: "", visible: false })
+                                    }
+                                >
+                                    <X />
+                                </Button>
+                            </div>
+
+                            {/* BILL CONTENT */}
+                            <div id="bill-content" className="text-sm space-y-3">
+
+                                {/* Store Info */}
+                                <div className="text-center">
+                                    <h1 className="text-lg font-bold">Cell Track</h1>
+                                    <p className="text-xs">Jl. Mawar 1</p>
+                                </div>
+
+                                {/* Invoice Info */}
+                                <div className="border-t border-b py-2 space-y-1">
+                                    <p><b>Invoice:</b> {selectedBillTransaction.invoice_number}</p>
+                                    <p><b>Tanggal:</b> {formatDateDDMMYYYY(selectedBillTransaction.tanggal_transaksi)}</p>
+                                    <p><b>Jenis:</b> {selectedBillTransaction.jenis_transaksi}</p>
+                                </div>
+
+                                {/* Items */}
+                                <div className="space-y-2">
+                                    {selectedBillTransaction.item.map((item, index) => {
+                                        const product = products?.find(
+                                            p => p.id_produk === Number(item.id_produk)
+                                        )
+
+                                        return (
+                                            <div key={index} className="flex justify-between">
+                                                <div>
+                                                    <p className="font-medium">
+                                                        {product?.nama_produk || `Produk #${item.id_produk}`}
+                                                    </p>
+                                                    <p className="text-xs">
+                                                        {item.quantity} x{" "}
+                                                        {Number(item.subtotal).toLocaleString("id-ID")}
+                                                    </p>
+                                                </div>
+
+                                                <p className="font-semibold">
+                                                    {Number(item.total).toLocaleString("id-ID")}
+                                                </p>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+
+                                {/* Total */}
+                                <div className="border-t pt-2 space-y-1">
+                                    <div className="flex justify-between">
+                                        <span>Subtotal</span>
+                                        <span>
+                                            Rp {Number(selectedBillTransaction.subtotal).toLocaleString("id-ID")}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between font-bold text-base">
+                                        <span>Total</span>
+                                        <span>
+                                            Rp {Number(selectedBillTransaction.total).toLocaleString("id-ID")}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Footer Text */}
+                                <div className="text-center mt-4 text-xs">
+                                    Terima kasih telah berbelanja 🙏
+                                </div>
+                            </div>
+
+                            {/* Actions (hidden saat print) */}
+                            <div className="flex justify-end gap-3 mt-5 print:hidden">
+                                <Button
+                                    variant="outline"
+                                    onClick={() =>
+                                        setShowBill({ id_transaksi: "", visible: false })
+                                    }
+                                >
+                                    Close
+                                </Button>
+
+                                <Button
+                                    className="bg-blue-500 hover:bg-blue-600"
+                                    onClick={() =>
+                                        handleGenerateBill(selectedBillTransaction.invoice_number)
+                                    }
+                                >
+                                    Generate / Print Bill
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            })()}
 
             {notification.visible && (
                 <div

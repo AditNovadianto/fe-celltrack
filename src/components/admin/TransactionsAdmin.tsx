@@ -20,7 +20,7 @@ type TransactionsAdminProps = {
 
 const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => {
     const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number, id_user?: number }>()
-    const [transactions, setTransactions] = useState<Array<{ id_transaksi: string, item: { id_produk: string, quantity: string, subtotal: string, total: string }[], tanggal_transaksi: string, quantity: string, subtotal: string, total: string, jenis_transaksi: string }>>()
+    const [transactions, setTransactions] = useState<Array<{ id_transaksi: string, invoice_number: string, item: { id_produk: string, quantity: string, subtotal: string, total: string }[], tanggal_transaksi: string, quantity: string, subtotal: string, total: string, jenis_transaksi: string }>>()
     const [currentPage, setCurrentPage] = useState(1)
     const [showDetails, setShowDetails] = useState({ id_transaksi: "", visible: false });
     const [notifications, setNotifications] = useState<{ readBy?: { role: string, id: number, readAt?: Date; }[] }[]>([]);
@@ -166,6 +166,7 @@ const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => 
                     <TableHeader>
                         <TableRow>
                             <TableHead>Id Transaksi</TableHead>
+                            <TableHead>Invoice Number</TableHead>
                             <TableHead>Tanggal Transaksi</TableHead>
                             <TableHead>Quantity</TableHead>
                             <TableHead>Sub Total</TableHead>
@@ -178,6 +179,7 @@ const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => 
                         {paginatedTransactions && paginatedTransactions.map((transaction) => (
                             <TableRow>
                                 <TableCell className="font-medium">{transaction.id_transaksi}</TableCell>
+                                <TableCell>{transaction.invoice_number}</TableCell>
                                 <TableCell>{formatDateDDMMYYYY(transaction.tanggal_transaksi)}</TableCell>
                                 <TableCell>{transaction.quantity}</TableCell>
                                 <TableCell>{Number(transaction.subtotal).toLocaleString("id-ID")}</TableCell>
@@ -250,6 +252,13 @@ const TransactionsAdmin: React.FC<TransactionsAdminProps> = ({ setSection }) => 
                                     <span className="text-gray-600">ID Transaksi</span>
                                     <span className="font-semibold">
                                         {selectedTransaction?.id_transaksi}
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between border-b pb-1">
+                                    <span className="text-gray-600">Invoice Number</span>
+                                    <span className="font-semibold">
+                                        {selectedTransaction?.invoice_number}
                                     </span>
                                 </div>
 
