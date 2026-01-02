@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@radix-ui/react-dropdown-menu"
-import { CircleX } from "lucide-react"
+import { CircleX, Eye, EyeOff } from "lucide-react"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import logo from "../images/logo-celltrack.png"
@@ -10,13 +10,15 @@ const SignIn = () => {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
+    const [showPassword, setShowPassword] = useState(true)
+
     const navigate = useNavigate()
 
     const signInHandler = async (e: any) => {
         e.preventDefault()
 
         try {
-            const response = await fetch(role === "Admin" || role === "Employee" ? "http://localhost:3000/signInUsers" : "http://localhost:3000/signInSuppliers", {
+            const response = await fetch(role === "Admin" || role === "Employee" ? `${import.meta.env.VITE_API_BASE_URL}/signInUsers` : `${import.meta.env.VITE_API_BASE_URL}/signInSuppliers`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -76,7 +78,12 @@ const SignIn = () => {
 
                     <div className="w-full mt-5">
                         <label className="block text-base font-semibold" htmlFor="">Password<span className="text-red-500">*</span></label>
-                        <input onChange={(e) => setPassword(e.target.value)} className="w-full border px-5 py-2 rounded-lg mt-2" type="password" />
+
+                        <div className="relative">
+                            <input onChange={(e) => setPassword(e.target.value)} className="w-full border px-5 py-2 rounded-lg mt-2" type={showPassword ? "password" : "text"} />
+
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-4 cursor-pointer">{showPassword ? <Eye /> : <EyeOff />}</button>
+                        </div>
 
                         <a className="text-sky-950 font-semibold mt-2 flex flex-col items-end" href="/forgot-password">forgot password?</a>
                     </div>

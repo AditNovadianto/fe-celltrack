@@ -19,10 +19,10 @@ type CustomersAdminProps = {
 }
 
 const CustomersAdmin: React.FC<CustomersAdminProps> = ({ setSection }) => {
-    const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number }>()
+    const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number, id_user?: number }>()
     const [customers, setCustomers] = useState<Array<{ id_pelanggan: number, nama_pelanggan: string, dob: string, email: string, no_telephon: string, id_toko: string }>>()
     const [currentPage, setCurrentPage] = useState(1)
-    const [notifications, setNotifications] = useState<{ read?: boolean }[]>([]);
+    const [notifications, setNotifications] = useState<{ readBy?: { role: string, id: number, readAt?: Date; }[] }[]>([]);
 
     const navigate = useNavigate()
 
@@ -59,7 +59,7 @@ const CustomersAdmin: React.FC<CustomersAdminProps> = ({ setSection }) => {
     useEffect(() => {
         const getAllCustomers = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllCustomers", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllCustomers`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -81,7 +81,7 @@ const CustomersAdmin: React.FC<CustomersAdminProps> = ({ setSection }) => {
 
         const getAllNotifications = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllNotifications", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllNotifications`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -141,7 +141,7 @@ const CustomersAdmin: React.FC<CustomersAdminProps> = ({ setSection }) => {
                         <Bell size={30} />
 
                         <div className="absolute -top-3 -right-3 w-7 h-7 bg-white text-blue-900 sm:bg-blue-500 sm:text-white rounded-full flex items-center justify-center">
-                            <p>{notifications.filter((notification) => notification.read === false).length}</p>
+                            <p>{notifications.filter((notif) => !notif.readBy?.some((item) => item.id === admin?.id_user && item.role === "USER")).length}</p>
                         </div>
                     </button>
 

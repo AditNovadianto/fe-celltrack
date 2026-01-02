@@ -14,7 +14,9 @@ import CustomersEmployee from "@/components/employee/CustomersEmployee"
 import TransactionsAdmin from "@/components/admin/TransactionsAdmin"
 import ProductsEmployee from "@/components/employee/ProductsEmployee"
 import TransactionsEmployee from "@/components/employee/TransactionsEmployee"
-import Notifications from "@/components/Notifications"
+import NotificationsUsers from "@/components/NotificationsUsers"
+import NotificationsSuppliers from "@/components/NotificationsSuppliers"
+import ProductsSupplier from "@/components/supplier/ProductsSupplier"
 
 const Dashboard = () => {
     const [section, setSection] = useState("Dashboard")
@@ -103,7 +105,7 @@ const Dashboard = () => {
 
                     {section === "Transactions" && <TransactionsAdmin setSection={setSection} />}
 
-                    {section === "Notifications" && <Notifications setSection={setSection} />}
+                    {section === "Notifications" && <NotificationsUsers setSection={setSection} />}
                 </div>
             )}
 
@@ -151,7 +153,7 @@ const Dashboard = () => {
 
                     {section === "Transactions" && <TransactionsEmployee setSection={setSection} />}
 
-                    {section === "Notifications" && <Notifications setSection={setSection} />}
+                    {section === "Notifications" && <NotificationsUsers setSection={setSection} />}
                 </div>
             )}
 
@@ -183,7 +185,11 @@ const Dashboard = () => {
             {/* Supplier Dashboard Content */}
             {user === "Supplier" && (
                 <div className="border border-red-500 w-full h-full">
-                    {section === "Dashboard" && <DashboardSupplier />}
+                    {section === "Dashboard" && <DashboardSupplier setSection={setSection} />}
+
+                    {section === "Products" && <ProductsSupplier setSection={setSection} />}
+
+                    {section === "Notifications" && <NotificationsSuppliers setSection={setSection} />}
                 </div>
             )}
 

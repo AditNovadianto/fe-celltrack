@@ -3,7 +3,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuSep
 import { useState } from "react"
 import logo from "../images/logo-celltrack.png"
 import { useNavigate } from "react-router-dom"
-import { CircleX } from "lucide-react"
+import { CircleX, Eye, EyeOff } from "lucide-react"
 
 const SignUp = () => {
     const [role, setRole] = useState("Admin")
@@ -15,6 +15,7 @@ const SignUp = () => {
     const [no_telp, setNoTelp] = useState("")
     const [kategori_supplier, setKategoriSupplier] = useState("")
     const [error, setError] = useState("")
+    const [showPassword, setShowPassword] = useState(false);
 
     const navigate = useNavigate()
 
@@ -22,7 +23,7 @@ const SignUp = () => {
         e.preventDefault()
 
         try {
-            const response = await fetch(role === "Admin" || role === "Employee" ? "http://localhost:3000/signUpUsers" : "http://localhost:3000/signUpSuppliers", {
+            const response = await fetch(role === "Admin" || role === "Employee" ? `${import.meta.env.VITE_API_BASE_URL}/signUpUsers` : `${import.meta.env.VITE_API_BASE_URL}/signUpSuppliers`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -111,7 +112,12 @@ const SignUp = () => {
 
                             <div className="w-full mt-5">
                                 <label className="block text-base font-semibold" htmlFor="">Password<span className="text-red-500">*</span></label>
-                                <input onChange={(e) => setPassword(e.target.value)} className="w-full border px-5 py-2 rounded-lg mt-2" type="password" />
+
+                                <div className="relative">
+                                    <input onChange={(e) => setPassword(e.target.value)} className="w-full border px-5 py-2 rounded-lg mt-2" type={showPassword ? "password" : "text"} />
+
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-4 cursor-pointer">{showPassword ? <Eye /> : <EyeOff />}</button>
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -156,7 +162,12 @@ const SignUp = () => {
 
                             <div className="w-full mt-5">
                                 <label className="block text-base font-semibold" htmlFor="">Password Supplier<span className="text-red-500">*</span></label>
-                                <input onChange={(e) => setPassword(e.target.value)} className="w-full border px-5 py-2 rounded-lg mt-2" type="password" />
+
+                                <div className="relative">
+                                    <input onChange={(e) => setPassword(e.target.value)} className="w-full border px-5 py-2 rounded-lg mt-2" type={showPassword ? "password" : "text"} />
+
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-4 cursor-pointer">{showPassword ? <Eye /> : <EyeOff />}</button>
+                                </div>
                             </div>
                         </div>
                     )}

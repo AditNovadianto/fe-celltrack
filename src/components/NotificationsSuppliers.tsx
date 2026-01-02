@@ -1,17 +1,18 @@
 import { Bell, Box } from "lucide-react"
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "./ui/breadcrumb"
-import React, { useEffect, useState } from "react"
-import { isTokenExpired } from "@/utils/auth"
-import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react";
 import profilePicture from "../images/profile-picture.png"
+import { useNavigate } from "react-router-dom";
+import { isTokenExpired } from "@/utils/auth";
 
-type NotificationsProps = {
+type NotificationsSuppliersProps = {
     setSection: (section: string) => void
 }
 
-const Notifications: React.FC<NotificationsProps> = ({ setSection }) => {
-    const [notifications, setNotifications] = useState<{ _id?: string, id_produk?: number, message?: string, stok?: number, read?: boolean, createdAt?: Date }[]>([]);
-    const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number }>();
+
+const NotificationsSuppliers: React.FC<NotificationsSuppliersProps> = ({ setSection }) => {
+    const [notifications, setNotifications] = useState<{ _id?: string, id_produk?: number, message?: string, stok?: number, readBy?: { role: string, id: number, readAt?: Date; }[], createdAt?: Date }[]>([]);
+    const [admin, setAdmin] = useState<{ nama_supplier?: string, id_supplier?: number }>();
     const [products, setProducts] = useState<{ id_produk: number, nama_produk: string, stok: string }[]>([])
     const [idNotification, setIdNotification] = useState("");
 
@@ -37,9 +38,11 @@ const Notifications: React.FC<NotificationsProps> = ({ setSection }) => {
     }, [])
 
     useEffect(() => {
+        if (!admin) return;
+
         const getAllNotifications = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllNotifications", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllNotifications`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -53,9 +56,11 @@ const Notifications: React.FC<NotificationsProps> = ({ setSection }) => {
 
                 const data = await response.json()
 
-                console.log("Notifications", data)
+                const dataForSpesificSupplier = data.notifications.filter((item: { id_supplier: number | undefined; }) => item.id_supplier === admin?.id_supplier)
 
-                setNotifications(data.notifications)
+                console.log("Notifications For Spesific Supplier", dataForSpesificSupplier)
+
+                setNotifications(dataForSpesificSupplier)
             } catch (error) {
                 console.error(error)
             }
@@ -63,7 +68,7 @@ const Notifications: React.FC<NotificationsProps> = ({ setSection }) => {
 
         const getAllProducts = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllProducts", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllProducts`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -85,18 +90,22 @@ const Notifications: React.FC<NotificationsProps> = ({ setSection }) => {
 
         getAllNotifications();
         getAllProducts();
-    }, [idNotification])
+    }, [admin, idNotification])
 
     const markNotificationAsRead = async (id: string) => {
         try {
             setIdNotification(id)
 
-            const response = await fetch(`http://localhost:3000/markNotificationAsRead/${id}`, {
-                method: "PUT",
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/markNotificationAsRead/${id}`, {
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-                }
+                },
+                body: JSON.stringify({
+                    userId: admin?.id_supplier,
+                    role: "SUPPLIER"
+                })
             })
 
             if (!response.ok) {
@@ -145,7 +154,7 @@ const Notifications: React.FC<NotificationsProps> = ({ setSection }) => {
                         <Bell size={30} />
 
                         <div className="absolute -top-3 -right-3 w-7 h-7 bg-white text-blue-900 sm:bg-blue-500 sm:text-white rounded-full flex items-center justify-center">
-                            <p>{notifications.filter((notification) => notification.read === false).length}</p>
+                            <p>{notifications.filter((notif) => !notif.readBy?.some((item) => item.id === admin?.id_supplier && item.role === "SUPPLIER")).length}</p>
                         </div>
                     </button>
 
@@ -153,9 +162,9 @@ const Notifications: React.FC<NotificationsProps> = ({ setSection }) => {
                         <img className="w-10" src={profilePicture} alt="" />
 
                         <div>
-                            <p className="font-semibold">{admin?.nama_user}</p>
+                            <p className="font-semibold">{admin?.nama_supplier}</p>
 
-                            <p>{admin?.id_role === 1 ? "Admin" : "Employee"}</p>
+                            <p>Supplier</p>
                         </div>
                     </div>
                 </div>
@@ -163,7 +172,7 @@ const Notifications: React.FC<NotificationsProps> = ({ setSection }) => {
 
             <div className="flex flex-col w-full gap-5 mt-10">
                 {notifications && notifications.map((notification, index) => (
-                    <button key={index} onClick={() => { markNotificationAsRead(String(notification._id)) }} className={`${notification.read === false ? 'bg-blue-200' : 'bg-gray-200'} cursor-pointer hover:scale-101 transition-all p-5 rounded-lg shadow-lg`}>
+                    <button key={index} onClick={() => { markNotificationAsRead(String(notification._id)) }} className={`${notification.readBy?.some((item) => item.id === admin?.id_supplier && item.role === "SUPPLIER") ? 'bg-gray-200' : 'bg-blue-200'} cursor-pointer hover:scale-101 transition-all p-5 rounded-lg shadow-lg`}>
                         <div className="flex items-center gap-5 justify-between w-full">
                             <p className="font-semibold text-lg">Notification</p>
 
@@ -200,4 +209,4 @@ const Notifications: React.FC<NotificationsProps> = ({ setSection }) => {
     )
 }
 
-export default Notifications
+export default NotificationsSuppliers

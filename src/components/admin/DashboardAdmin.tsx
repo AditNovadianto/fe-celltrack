@@ -10,13 +10,13 @@ type DashboardAdminProps = {
 }
 
 const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
-    const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number }>();
+    const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number, id_user?: number }>();
     const [totalEmployees, setTotalEmployees] = useState(0);
     const [totalCostomers, setTotalCostomers] = useState(0);
     const [totalProducts, setTotalProducts] = useState(0);
     const [totalSuppliers, setTotalSuppliers] = useState(0);
     const [totalTransactions, setTotalTransactions] = useState(0);
-    const [notifications, setNotifications] = useState<{ read?: boolean }[]>([]);
+    const [notifications, setNotifications] = useState<{ readBy?: { role: string, id: number, readAt?: Date; }[] }[]>([]);
 
     const navigate = useNavigate();
 
@@ -42,7 +42,7 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
     useEffect(() => {
         const getAllUsers = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllUsers", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllUsers`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -67,7 +67,7 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
 
         const getAllCustomers = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllCustomers", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllCustomers`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -91,7 +91,7 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
 
         const getAllProducts = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllProducts", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllProducts`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -115,7 +115,7 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
 
         const getAllSuppliers = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllSuppliers", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllSuppliers`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -139,7 +139,7 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
 
         const getAllTransactions = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllTransactions", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllTransactions`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -163,7 +163,7 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
 
         const getAllNotifications = async () => {
             try {
-                const response = await fetch("http://localhost:3000/getAllNotifications", {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllNotifications`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -215,7 +215,7 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
                         <Bell size={30} />
 
                         <div className="absolute -top-3 -right-3 w-7 h-7 bg-white text-blue-900 sm:bg-blue-500 sm:text-white rounded-full flex items-center justify-center">
-                            <p>{notifications.filter((notification) => notification.read === false).length}</p>
+                            <p>{notifications.filter((notif) => !notif.readBy?.some((item) => item.id === admin?.id_user && item.role === "USER")).length}</p>
                         </div>
                     </button>
 

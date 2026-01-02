@@ -26,7 +26,7 @@ type TransactionsEmployeeProps = {
 }
 
 const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection }) => {
-    const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number }>();
+    const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number, id_user?: number }>();
     const [transactions, setTransactions] = useState<Array<{ id_transaksi: string, item: { id_produk: string, quantity: string, subtotal: string, total: string }[], tanggal_transaksi: string, quantity: string, subtotal: string, total: string, jenis_transaksi: string }>>()
     const [currentPage, setCurrentPage] = useState(1)
     const [showDetails, setShowDetails] = useState({ id_transaksi: "", visible: false });
@@ -42,7 +42,8 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
     const [notification, setNotification] = useState<{ message: string; type: "success" | "error"; visible: boolean; }>({
         message: "", type: "success", visible: false
     });
-    const [notifications, setNotifications] = useState<{ read?: boolean }[]>([]);
+    const [notifications, setNotifications] = useState<{ readBy?: { role: string, id: number, readAt?: Date; }[] }[]>([]);
+    const [showCommitTransaction, setShowCommitTransaction] = useState(false)
 
     const navigate = useNavigate();
 
@@ -177,6 +178,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
 
     console.log("Transactions", transactions)
 
+    // Function helper for Format Date
     function formatDateDDMMYYYY(isoString: string | undefined): string {
         if (!isoString) return "";
 
@@ -188,7 +190,9 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
 
         return `${day}-${month}-${year}`;
     }
+    // 
 
+    // Function Helper for Increase and Decrease Product Quantity Button
     const addItem = (product: any) => {
         setItems([...items, { id_produk: product.id_produk, quantity: 1, subtotal: Number(product.harga_jual), total: 1 * Number(product.harga_jual) }])
     }
@@ -202,10 +206,12 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
     }
 
     console.log(items)
+    // 
 
+    // Create Transaction
     const createTransactionHandler = async () => {
         try {
-            const response = await fetch("http://localhost:3000/createTransaction", {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/createTransaction`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -230,6 +236,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
             setTanggalTransaksi("")
             setJenisTransaksi("")
             setIdPelanggan("")
+            setShowCommitTransaction(false)
 
             setShowCreate(false)
 
@@ -238,7 +245,42 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
             console.error(error)
         }
     }
+    // 
 
+    // Function Helper for Calculate subtotal and total
+    const calculateSubtotal = (id_produk: number, qty: number) => {
+        const product = products?.find(p => p.id_produk === id_produk)
+        return product ? product.harga_jual * qty : 0
+    }
+
+    const totalHarga = items.reduce((total, item) => {
+        return total + calculateSubtotal(Number(item.id_produk), item.quantity)
+    }, 0)
+    // 
+
+    // Generate Bill
+    const generateBillFilename = () => {
+        const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase()
+        const today = new Date().toISOString().split("T")[0] // YYYY-MM-DD
+        return `BILL-${randomCode}-${today}`
+    }
+
+    const handleGenerateBill = () => {
+        const originalTitle = document.title
+        const filename = generateBillFilename()
+
+        document.title = filename
+
+        window.print()
+
+        // kembalikan title setelah print
+        setTimeout(() => {
+            document.title = originalTitle
+        }, 500)
+    }
+    // 
+
+    // Notification
     const showNotification = (
         message: string,
         type: "success" | "error" = "success"
@@ -253,6 +295,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
             setNotification((prev) => ({ ...prev, visible: false }));
         }, 3000);
     };
+    // 
 
     return (
         <div className="p-5 relative h-full md:min-h-screen">
@@ -276,7 +319,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                         <Bell size={30} />
 
                         <div className="absolute -top-3 -right-3 w-7 h-7 bg-white text-blue-900 sm:bg-blue-500 sm:text-white rounded-full flex items-center justify-center">
-                            <p>{notifications.filter((notification) => notification.read === false).length}</p>
+                            <p>{notifications.filter((notif) => !notif.readBy?.some((item) => item.id === admin?.id_user && item.role === "USER")).length}</p>
                         </div>
                     </button>
 
@@ -524,10 +567,11 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                         <p className="mb-2 font-semibold">Pilih Produk:</p>
 
                         <div className="flex items-center gap-5 flex-wrap justify-center mt-10">
-
                             {products && products.map((product, index) => (
-                                <div key={index} className="border rounded-md p-2 shadow-2xl">
-                                    <button onClick={() => addItem(product)} className="cursor-pointer flex flex-col justify-center items-center gap-3 p-3 w-62.5">
+                                <div key={index} className={`${product.stok < 5 ? 'bg-red-200' : 'bg-white'} border rounded-md p-2 shadow-2xl`}>
+                                    <button onClick={() => addItem(product)} className="transition-all relative cursor-pointer flex flex-col justify-center items-center gap-3 p-3 w-62.5">
+                                        <p className={`${product.stok < 5 ? "block" : "hidden"} absolute px-2 py-1 bg-red-500 text-white rounded-full font-semibold top-2 left-2`}>Sisa {product.stok}</p>
+
                                         <Box size={60} />
 
                                         <p className="font-semibold text-lg">{product.nama_produk}</p>
@@ -536,11 +580,11 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                                     </button>
 
                                     <div className={`${items.find(item => item.id_produk === product.id_produk) ? 'flex' : 'hidden'} items-center gap-3 mt-2 justify-center`}>
-                                        <Button onClick={() => items.find(item => item.id_produk === product.id_produk)?.quantity === 1 ? setItems(items.filter(item => item.id_produk !== product.id_produk)) : decreaseQuantity(product.id_produk)}>-</Button>
+                                        <Button onClick={() => items.find(item => item.id_produk === product.id_produk)?.quantity === 1 ? setItems(items.filter(item => item.id_produk !== product.id_produk)) : decreaseQuantity(product.id_produk)} className="cursor-pointer">-</Button>
 
                                         <p>{items.find(item => item.id_produk === product.id_produk)?.quantity || 0}</p>
 
-                                        <Button onClick={() => increaseQuantity(product.id_produk)}>+</Button>
+                                        <Button onClick={() => increaseQuantity(product.id_produk)} className="cursor-pointer">+</Button>
                                     </div>
                                 </div>
                             ))}
@@ -575,7 +619,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                         </div>
 
                         <div className="mt-5 flex items-center gap-3 w-full">
-                            <Button onClick={() => createTransactionHandler()} className="flex-1 h-11 bg-green-500 hover:bg-green-600 transition-all cursor-pointer">
+                            <Button onClick={() => setShowCommitTransaction(true)} className="flex-1 h-11 bg-green-500 hover:bg-green-600 transition-all cursor-pointer">
                                 Submit
                             </Button>
 
@@ -588,6 +632,94 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                             </Button>
                         </div>
                     </div>
+
+                    {showCommitTransaction && (
+                        <div className="fixed inset-0 bg-black/50 p-5 xl:flex xl:items-center xl:justify-center z-50 overflow-y-auto">
+                            <div className="bg-white p-5 rounded-lg w-[90%] lg:w-[80%] m-auto">
+                                {/* Header */}
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-bold">Konfirmasi Transaksi</h2>
+
+                                    <Button
+                                        className="bg-red-500 hover:bg-red-600"
+                                        onClick={() => setShowCommitTransaction(false)}
+                                    >
+                                        <X />
+                                    </Button>
+                                </div>
+
+                                {/* Summary */}
+                                <div className="mb-5 text-sm space-y-1">
+                                    <p><b>Tanggal:</b> {tanggalTransaksi}</p>
+                                    <p><b>Jenis Transaksi:</b> {jenisTransaksi}</p>
+                                    <p><b>Pelanggan:</b> {
+                                        customers?.find(c => c.id_pelanggan === Number(idPelanggan))?.nama_pelanggan
+                                    }</p>
+                                </div>
+
+                                {/* Items Table */}
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border text-sm">
+                                        <thead className="bg-gray-100">
+                                            <tr>
+                                                <th className="border p-2">Produk</th>
+                                                <th className="border p-2">Harga</th>
+                                                <th className="border p-2">Qty</th>
+                                                <th className="border p-2">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {items.map((item, index) => {
+                                                const product = products?.find(p => p.id_produk === item.id_produk)
+                                                return (
+                                                    <tr key={index}>
+                                                        <td className="border p-2">{product?.nama_produk}</td>
+                                                        <td className="border p-2">
+                                                            {Number(product?.harga_jual).toLocaleString("id-ID")}
+                                                        </td>
+                                                        <td className="border p-2 text-center">{item.quantity}</td>
+                                                        <td className="border p-2">
+                                                            {calculateSubtotal(Number(item.id_produk), item.quantity).toLocaleString("id-ID")}
+                                                        </td>
+                                                    </tr>
+                                                )
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Total */}
+                                <div className="flex justify-end mt-4 text-lg font-bold">
+                                    Total: Rp {totalHarga.toLocaleString("id-ID")}
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex justify-end gap-3 mt-6">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setShowCommitTransaction(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+
+                                    <Button
+                                        onClick={() => createTransactionHandler()}
+                                        className="bg-green-500 hover:bg-green-600"
+                                    >
+                                        Commit Transaction
+                                    </Button>
+
+                                    {/* Generate Bill */}
+                                    <Button
+                                        className="bg-blue-500 hover:bg-blue-600"
+                                        onClick={handleGenerateBill}
+                                    >
+                                        Generate Bill
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 
