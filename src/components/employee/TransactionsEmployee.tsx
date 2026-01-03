@@ -233,6 +233,10 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                 throw new Error("Get Products gagal")
             }
 
+            const data = await response.json()
+
+            const newTransaction = data.data
+
             setItems([])
             setTanggalTransaksi("")
             setJenisTransaksi("")
@@ -240,6 +244,12 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
             setShowCommitTransaction(false)
 
             setShowCreate(false)
+
+            // Show Bill Component after Transaction was Created
+            setShowBill({
+                id_transaksi: newTransaction.insertId,
+                visible: true
+            })
 
             showNotification("Customer berhasil ditambahkan", "success");
         } catch (error) {

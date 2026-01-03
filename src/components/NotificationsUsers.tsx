@@ -128,7 +128,7 @@ const NotificationsUsers: React.FC<NotificationsUsersProps> = ({ setSection }) =
     console.log(notifications)
 
     return (
-        <div className="p-5">
+        <div className="p-5 max-h-screen overflow-y-auto">
             <div className="flex items-center gap-5 w-full justify-between">
                 <div>
                     <Breadcrumb>

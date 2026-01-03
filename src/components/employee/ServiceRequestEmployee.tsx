@@ -326,15 +326,16 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                                 Detail Service Request
                             </h2>
 
-                            <button
-                                className="text-gray-500 hover:text-gray-800"
+                            <Button
+                                variant="destructive"
+                                className="text-white"
                                 onClick={() => {
                                     setShowDetail(false)
                                     setSelectedServiceRequest(null)
                                 }}
                             >
-                                ✕
-                            </button>
+                                <X />
+                            </Button>
                         </div>
 
                         {/* Content */}
@@ -409,12 +410,13 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                                 Create Service Request
                             </h2>
 
-                            <button
-                                className="text-gray-500 hover:text-gray-800"
+                            <Button
+                                variant="destructive"
+                                className="text-white"
                                 onClick={() => setShowCreate(false)}
                             >
-                                ✕
-                            </button>
+                                <X />
+                            </Button>
                         </div>
 
                         {/* Form */}

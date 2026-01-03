@@ -1,4 +1,4 @@
-import { Bell, Eye } from "lucide-react"
+import { Bell, Eye, X } from "lucide-react"
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "../ui/breadcrumb"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
@@ -241,15 +241,16 @@ const ServiceRequestAdmin: React.FC<ServiceRequestAdmin> = ({ setSection }) => {
                                 Detail Service Request
                             </h2>
 
-                            <button
-                                className="text-gray-500 hover:text-gray-800"
+                            <Button
+                                variant="destructive"
+                                className="text-white"
                                 onClick={() => {
                                     setShowDetail(false)
                                     setSelectedServiceRequest(null)
                                 }}
                             >
-                                ✕
-                            </button>
+                                <X />
+                            </Button>
                         </div>
 
                         {/* Content */}
