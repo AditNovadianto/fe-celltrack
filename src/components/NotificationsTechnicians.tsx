@@ -1,18 +1,17 @@
 import { Bell, Box } from "lucide-react"
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "./ui/breadcrumb"
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { isTokenExpired } from "@/utils/auth"
 import profilePicture from "../images/profile-picture.png"
-import { useNavigate } from "react-router-dom";
-import { isTokenExpired } from "@/utils/auth";
 
-type NotificationsSuppliersProps = {
+type NotificationsTechniciansProps = {
     setSection: (section: string) => void
 }
 
-const NotificationsSuppliers: React.FC<NotificationsSuppliersProps> = ({ setSection }) => {
-    const [notifications, setNotifications] = useState<{ _id?: string, id_produk?: number, message?: string, stok?: number, readBy?: { role: string, id: number, readAt?: Date; }[], createdAt?: Date }[]>([]);
-    const [admin, setAdmin] = useState<{ nama_supplier?: string, id_supplier?: number }>();
-    const [products, setProducts] = useState<{ id_produk: number, nama_produk: string, stok: string }[]>([])
+const NotificationsTechnicians: React.FC<NotificationsTechniciansProps> = ({ setSection }) => {
+    const [notifications, setNotifications] = useState<{ _id?: string, id_service_request?: number, status?: string, readBy?: { role: string, id: number, readAt?: Date; }[], createdAt?: Date }[]>([]);
+    const [admin, setAdmin] = useState<{ nama_teknisi?: string, id_teknisi?: number }>();
     const [idNotification, setIdNotification] = useState("");
 
     const navigate = useNavigate();
@@ -25,6 +24,7 @@ const NotificationsSuppliers: React.FC<NotificationsSuppliersProps> = ({ setSect
             localStorage.removeItem("user")
             navigate("/")
         }
+
     }, [])
 
     useEffect(() => {
@@ -39,9 +39,9 @@ const NotificationsSuppliers: React.FC<NotificationsSuppliersProps> = ({ setSect
     useEffect(() => {
         if (!admin) return;
 
-        const getAllNotifications = async () => {
+        const getAllServiceRequestStatus = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllNotifications`, {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllServiceRequestStatus`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -50,60 +50,33 @@ const NotificationsSuppliers: React.FC<NotificationsSuppliersProps> = ({ setSect
                 })
 
                 if (!response.ok) {
-                    throw new Error("Get Notifications gagal")
+                    throw new Error("Get All Service Request Status gagal")
                 }
 
                 const data = await response.json()
 
-                const dataForSpesificSupplier = data.notifications.filter((item: { id_supplier: number | undefined; }) => item.id_supplier === admin?.id_supplier)
-
-                console.log("Notifications For Spesific Supplier", dataForSpesificSupplier)
-
-                setNotifications(dataForSpesificSupplier)
+                setNotifications(data.serviceRequestStatus)
             } catch (error) {
                 console.error(error)
             }
         }
 
-        const getAllProducts = async () => {
-            try {
-                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllProducts`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-                    }
-                })
-
-                if (!response.ok) {
-                    throw new Error("Get Products gagal")
-                }
-
-                const data = await response.json()
-
-                setProducts(data);
-            } catch (error) {
-                console.error(error)
-            }
-        }
-
-        getAllNotifications();
-        getAllProducts();
+        getAllServiceRequestStatus();
     }, [admin, idNotification])
 
-    const markNotificationAsRead = async (id: string) => {
+    const markServiceRequestStatusAsRead = async (id: string) => {
         try {
             setIdNotification(id)
 
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/markNotificationAsRead/${id}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/markServiceRequestStatusAsRead/${id}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                 },
                 body: JSON.stringify({
-                    userId: admin?.id_supplier,
-                    role: "SUPPLIER"
+                    userId: admin?.id_teknisi,
+                    role: "TECHNICIAN"
                 })
             })
 
@@ -153,7 +126,7 @@ const NotificationsSuppliers: React.FC<NotificationsSuppliersProps> = ({ setSect
                         <Bell size={30} />
 
                         <div className="absolute -top-3 -right-3 w-7 h-7 bg-white text-blue-900 sm:bg-blue-500 sm:text-white rounded-full flex items-center justify-center">
-                            <p>{notifications.filter((notif) => !notif.readBy?.some((item) => item.id === admin?.id_supplier && item.role === "SUPPLIER")).length}</p>
+                            <p>{notifications.filter((notif) => !notif.readBy?.some((item) => item.id === admin?.id_teknisi && item.role === "TECHNICIAN")).length}</p>
                         </div>
                     </button>
 
@@ -161,9 +134,9 @@ const NotificationsSuppliers: React.FC<NotificationsSuppliersProps> = ({ setSect
                         <img className="w-10" src={profilePicture} alt="" />
 
                         <div>
-                            <p className="font-semibold">{admin?.nama_supplier}</p>
+                            <p className="font-semibold">{admin?.nama_teknisi}</p>
 
-                            <p>Supplier</p>
+                            <p>Technician</p>
                         </div>
                     </div>
                 </div>
@@ -171,7 +144,7 @@ const NotificationsSuppliers: React.FC<NotificationsSuppliersProps> = ({ setSect
 
             <div className="flex flex-col w-full gap-5 mt-10 mb-20 lg:mb-0">
                 {notifications && notifications.map((notification, index) => (
-                    <button key={index} onClick={() => { markNotificationAsRead(String(notification._id)) }} className={`${notification.readBy?.some((item) => item.id === admin?.id_supplier && item.role === "SUPPLIER") ? 'bg-gray-200' : 'bg-blue-200'} cursor-pointer hover:scale-101 transition-all p-5 rounded-lg shadow-lg`}>
+                    <button key={index} onClick={() => { markServiceRequestStatusAsRead(String(notification._id)) }} className={`${notification.readBy?.some((item) => item.id === admin?.id_teknisi && item.role === "TECHNICIAN") ? 'bg-gray-200' : 'bg-blue-200'} cursor-pointer hover:scale-101 transition-all p-5 rounded-lg shadow-lg`}>
                         <div className="flex items-center gap-5 justify-between w-full">
                             <p className="font-semibold text-lg">Notification</p>
 
@@ -183,21 +156,15 @@ const NotificationsSuppliers: React.FC<NotificationsSuppliersProps> = ({ setSect
 
                             <div>
                                 <div className="flex flex-row gap-2 w-full">
-                                    <p>Produk:</p>
+                                    <p>Id Service Request:</p>
 
-                                    <p className="font-semibold">{products?.find((product) => product.id_produk === notification.id_produk)?.nama_produk}</p>
+                                    <p className="font-semibold">{notification.id_service_request}</p>
                                 </div>
 
                                 <div className="flex flex-row gap-2">
-                                    <p>Stok:</p>
+                                    <p>Status:</p>
 
-                                    <p className="font-semibold">{products?.find((product) => product.id_produk === notification.id_produk)?.stok}</p>
-                                </div>
-
-                                <div className="flex flex-row gap-2">
-                                    <p>Message:</p>
-
-                                    <p className="font-semibold text-start">{notification.message}</p>
+                                    <p className="font-semibold">{notification.status}</p>
                                 </div>
                             </div>
                         </div>
@@ -208,4 +175,4 @@ const NotificationsSuppliers: React.FC<NotificationsSuppliersProps> = ({ setSect
     )
 }
 
-export default NotificationsSuppliers
+export default NotificationsTechnicians

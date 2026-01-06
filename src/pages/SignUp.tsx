@@ -15,7 +15,7 @@ const SignUp = () => {
     const [no_telp, setNoTelp] = useState("")
     const [kategori_supplier, setKategoriSupplier] = useState("")
     const [error, setError] = useState("")
-    const [showPassword, setShowPassword] = useState(false);
+    const [showPassword, setShowPassword] = useState(true);
 
     const navigate = useNavigate()
 
@@ -23,7 +23,7 @@ const SignUp = () => {
         e.preventDefault()
 
         try {
-            const response = await fetch(role === "Admin" || role === "Employee" ? `${import.meta.env.VITE_API_BASE_URL}/signUpUsers` : `${import.meta.env.VITE_API_BASE_URL}/signUpSuppliers`, {
+            const response = await fetch(role === "Admin" || role === "Employee" ? `${import.meta.env.VITE_API_BASE_URL}/signUpUsers` : role === "Supplier" ? `${import.meta.env.VITE_API_BASE_URL}/signUpSuppliers` : `${import.meta.env.VITE_API_BASE_URL}/signUpTechnicians`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -36,13 +36,17 @@ const SignUp = () => {
                     alamat,
                     id_toko: 1,
                     id_role: role === "Admin" ? 1 : role === "Employee" ? 2 : 3,
-                } : {
+                } : role === "Supplier" ? {
                     nama_supplier: nama_user,
                     email,
                     alamat_supplier: alamat,
                     no_telephon: no_telp,
                     kategori_supplier: kategori_supplier,
                     password,
+                } : {
+                    nama_teknisi: nama_user,
+                    email_teknisi: email,
+                    password: password
                 }),
             })
 
@@ -53,7 +57,7 @@ const SignUp = () => {
             const data = await response.json()
 
             sessionStorage.setItem("token", data.token)
-            localStorage.setItem("user", JSON.stringify(role === "Admin" || role === "Employee" ? data.user : data.supplier))
+            localStorage.setItem("user", JSON.stringify(role === "Admin" || role === "Employee" ? data.user : role === "Supplier" ? data.supplier : data.teknisi))
 
             navigate("/dashboard")
         } catch (error) {
@@ -83,6 +87,7 @@ const SignUp = () => {
                                     <DropdownMenuRadioItem className="text-black hover:bg-gray-300 transition-all cursor-pointer px-2 py-1" value="Admin">Admin</DropdownMenuRadioItem>
                                     <DropdownMenuRadioItem className="text-black hover:bg-gray-300 transition-all cursor-pointer px-2 py-1" value="Employee">Employee</DropdownMenuRadioItem>
                                     <DropdownMenuRadioItem className="text-black hover:bg-gray-300 transition-all cursor-pointer px-2 py-1" value="Supplier">Supplier</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem className="text-black hover:bg-gray-300 transition-all cursor-pointer px-2 py-1" value="Technician">Technician</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -120,7 +125,7 @@ const SignUp = () => {
                                 </div>
                             </div>
                         </div>
-                    ) : (
+                    ) : role === "Supplier" ? (
                         <div>
                             <div className="w-full mt-5">
                                 <label className="block text-base font-semibold" htmlFor="">Name Supplier<span className="text-red-500">*</span></label>
@@ -162,6 +167,28 @@ const SignUp = () => {
 
                             <div className="w-full mt-5">
                                 <label className="block text-base font-semibold" htmlFor="">Password Supplier<span className="text-red-500">*</span></label>
+
+                                <div className="relative">
+                                    <input onChange={(e) => setPassword(e.target.value)} className="w-full border px-5 py-2 rounded-lg mt-2" type={showPassword ? "password" : "text"} />
+
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-4 cursor-pointer">{showPassword ? <Eye /> : <EyeOff />}</button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <div className="w-full mt-5">
+                                <label className="block text-base font-semibold" htmlFor="">Name Technician<span className="text-red-500">*</span></label>
+                                <input onChange={(e) => setNamaUser(e.target.value)} className="w-full border px-5 py-2 rounded-lg mt-2" type="text" />
+                            </div>
+
+                            <div className="w-full mt-5">
+                                <label className="block text-base font-semibold" htmlFor="">Email Technician<span className="text-red-500">*</span></label>
+                                <input onChange={(e) => setEmail(e.target.value)} className="w-full border px-5 py-2 rounded-lg mt-2" type="email" />
+                            </div>
+
+                            <div className="w-full mt-5">
+                                <label className="block text-base font-semibold" htmlFor="">Password Technician<span className="text-red-500">*</span></label>
 
                                 <div className="relative">
                                     <input onChange={(e) => setPassword(e.target.value)} className="w-full border px-5 py-2 rounded-lg mt-2" type={showPassword ? "password" : "text"} />

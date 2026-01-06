@@ -1,8 +1,8 @@
-import { Bell, Check, Eye, X } from "lucide-react"
+import { Bell, Check, ClipboardList, Eye, X } from "lucide-react"
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "../ui/breadcrumb"
-import React, { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { isTokenExpired } from "@/utils/auth"
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { isTokenExpired } from "@/utils/auth";
 import profilePicture from "../../images/profile-picture.png"
 import {
     Table,
@@ -14,32 +14,22 @@ import {
 } from "@/components/ui/table"
 import { Button } from "../ui/button"
 
-type ServiceRequestEmployee = {
+type ServiceRequestTechnician = {
     setSection: (section: string) => void
 }
 
-const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }) => {
-    const [admin, setAdmin] = useState<{ nama_user?: string, id_role?: number, id_user?: number }>()
-    const [currentPage, setCurrentPage] = useState(1)
+const ServiceRequestTechnician: React.FC<ServiceRequestTechnician> = ({ setSection }) => {
+    const [admin, setAdmin] = useState<{ nama_teknisi?: string, id_teknisi?: number }>();
     const [notifications, setNotifications] = useState<{ readBy?: { role: string, id: number, readAt?: Date; }[] }[]>([]);
-    const [serviceRequests, setServiceRequests] = useState<{ id_service_request?: number, nama_pelanggan?: string, keterangan?: string, tanggal_mulai?: string, tanggal_selesai?: string, status?: string, harga?: string }[]>([])
-    const [selectedServiceRequest, setSelectedServiceRequest] = useState<any>(null)
-    const [customers, setCustomers] = useState<Array<{ id_pelanggan: number, nama_pelanggan: string, dob: string, email: string, no_telephon: string, id_toko: string }>>()
+    const [serviceRequests, setServiceRequests] = useState<{ id_service_request?: number, nama_pelanggan?: string, keterangan?: string, tanggal_mulai?: string, tanggal_selesai?: string, status?: string, harga?: string }[]>([]);
     const [notification, setNotification] = useState<{ visible: boolean; message: string; type: "success" | "error" }>({ visible: false, message: "", type: "success" });
     const [technicians, setTechnicians] = useState<{ id_teknisi: number, nama_teknisi: string }[]>([])
+    const [selectedServiceRequest, setSelectedServiceRequest] = useState<any>(null)
     const [showDetail, setShowDetail] = useState(false);
-    const [showCreate, setShowCreate] = useState(false);
-    const [formCreate, setFormCreate] = useState({
-        nama_pelanggan: "",
-        keterangan: "",
-        tanggal_mulai: "",
-        tanggal_selesai: "",
-        harga: "",
-        status: "PENDING",
-        id_pelanggan: "",
-    });
+    const [showTakeService, setShowTakeService] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
 
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
     useEffect(() => {
         const token = sessionStorage.getItem("token")
@@ -49,6 +39,7 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
             localStorage.removeItem("user")
             navigate("/")
         }
+
     }, [])
 
     // Pagination
@@ -94,28 +85,6 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
             }
         }
 
-        const getAllCustomers = async () => {
-            try {
-                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllCustomers`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${sessionStorage.getItem("token")}`
-                    }
-                })
-
-                if (!response.ok) {
-                    throw new Error("Get Customers gagal")
-                }
-
-                const data = await response.json()
-
-                setCustomers(data.customers)
-            } catch (error) {
-                console.error(error)
-            }
-        }
-
         const getAllTechnicians = async () => {
             try {
                 const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllTechnicians`, {
@@ -140,9 +109,9 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
             }
         }
 
-        const getAllNotifications = async () => {
+        const getAllServiceRequestStatus = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllNotifications`, {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllServiceRequestStatus`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -151,60 +120,52 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                 })
 
                 if (!response.ok) {
-                    throw new Error("Get Notifications gagal")
+                    throw new Error("Get All Service Request Status gagal")
                 }
 
                 const data = await response.json()
 
-                console.log("Notifications", data)
-
-                setNotifications(data.notifications)
+                setNotifications(data.serviceRequestStatus)
             } catch (error) {
                 console.error(error)
             }
         }
 
         getAllServiceRequests();
-        getAllCustomers();
         getAllTechnicians();
-        getAllNotifications();
-    }, [showDetail, showCreate])
+        getAllServiceRequestStatus();
+    }, [showDetail, showTakeService])
 
     console.log(serviceRequests)
 
-    const handleCreateServiceRequest = async () => {
+    const handleTakeService = async () => {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_API_BASE_URL}/createServiceRequest`,
+                `${import.meta.env.VITE_API_BASE_URL}/takeServiceRequest`,
                 {
-                    method: "POST",
+                    method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+                        "Authorization": `Bearer ${sessionStorage.getItem("token")}`
                     },
-                    body: JSON.stringify(formCreate),
+                    body: JSON.stringify({
+                        id_service_request: selectedServiceRequest.id_service_request,
+                        id_teknisi: admin?.id_teknisi
+                    })
                 }
             )
 
             if (!response.ok) {
-                throw new Error("Create Service Request gagal")
+                throw new Error("Gagal mengambil service request")
             }
 
-            setShowCreate(false)
-            setFormCreate({
-                nama_pelanggan: "",
-                keterangan: "",
-                tanggal_mulai: "",
-                tanggal_selesai: "",
-                harga: "",
-                status: "PENDING",
-                id_pelanggan: "",
-            })
+            setSelectedServiceRequest(null)
+            setShowTakeService(false)
 
-            showNotification("Create Service Request Berhasil", "success")
+            showNotification("Take Service Berhasil Dibuat", "success");
         } catch (error) {
             console.error(error)
-            alert("Gagal membuat Service Request")
+            alert("Terjadi kesalahan saat mengambil service request")
         }
     }
 
@@ -229,7 +190,7 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
     }
 
     return (
-        <div className="p-5 relative h-full md:min-h-screen">
+        <div className="p-5">
             <div className="flex items-center gap-5 w-full justify-between">
                 <div>
                     <Breadcrumb>
@@ -250,7 +211,7 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                         <Bell size={30} />
 
                         <div className="absolute -top-3 -right-3 w-7 h-7 bg-white text-blue-900 sm:bg-blue-500 sm:text-white rounded-full flex items-center justify-center">
-                            <p>{notifications.filter((notif) => !notif.readBy?.some((item) => item.id === admin?.id_user && item.role === "USER")).length}</p>
+                            <p>{notifications.filter((notif) => !notif.readBy?.some((item) => item.id === admin?.id_teknisi && item.role === "TECHNICIAN")).length}</p>
                         </div>
                     </button>
 
@@ -258,9 +219,9 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                         <img className="w-10" src={profilePicture} alt="" />
 
                         <div>
-                            <p className="font-semibold">{admin?.nama_user}</p>
+                            <p className="font-semibold">{admin?.nama_teknisi}</p>
 
-                            <p>{admin?.id_role === 1 ? "Admin" : "User"}</p>
+                            <p>Technician</p>
                         </div>
                     </div>
                 </div>
@@ -303,6 +264,18 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                                     >
                                         <Eye />
                                     </Button>
+
+                                    <Button
+                                        size="sm"
+                                        className="bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedServiceRequest(serviceRequest);
+
+                                            setShowTakeService(true);
+                                        }}
+                                    >
+                                        <ClipboardList />
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -334,12 +307,6 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                         Next
                     </Button>
                 </div>
-            </div>
-
-            <div className="absolute mb-20 lg:mb-0 bottom-5 w-full left-[50%] transform -translate-x-1/2 px-5">
-                <Button onClick={() => setShowCreate(true)} className="cursor-pointer w-full bg-green-500 text-white hover:bg-green-600">
-                    Tambah Service Request
-                </Button>
             </div>
 
             {showDetail && selectedServiceRequest && (
@@ -438,151 +405,103 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                 </div>
             )}
 
-            {showCreate && (
+            {showTakeService && selectedServiceRequest && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white p-6 rounded-lg w-150 relative">
 
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-semibold">
-                                Create Service Request
+                                Konfirmasi Ambil Service Request
                             </h2>
 
                             <Button
                                 variant="destructive"
                                 className="text-white"
-                                onClick={() => setShowCreate(false)}
+                                onClick={() => {
+                                    setShowTakeService(false)
+                                    setSelectedServiceRequest(null)
+                                }}
                             >
                                 <X />
                             </Button>
                         </div>
 
-                        {/* Form */}
-                        <div className="space-y-4 text-sm">
-
-                            {/* Pelanggan */}
-                            <div>
-                                <label className="block mb-1 font-medium">
-                                    Pelanggan
-                                </label>
-                                <select
-                                    className="w-full border rounded px-3 py-2"
-                                    value={formCreate.id_pelanggan}
-                                    onChange={(e) => {
-                                        const selectedId = e.target.value
-                                        const selectedCustomer = customers?.find(
-                                            (cust) => String(cust.id_pelanggan) === selectedId
-                                        )
-
-                                        setFormCreate({
-                                            ...formCreate,
-                                            id_pelanggan: selectedId,
-                                            nama_pelanggan: selectedCustomer?.nama_pelanggan || "",
-                                        })
-                                    }}
-                                >
-                                    <option value="">Pilih Pelanggan</option>
-                                    {customers?.map((cust) => (
-                                        <option
-                                            key={cust.id_pelanggan}
-                                            value={cust.id_pelanggan}
-                                        >
-                                            {cust.nama_pelanggan}
-                                        </option>
-                                    ))}
-                                </select>
+                        {/* Content (Detail Singkat) */}
+                        <div className="space-y-5 text-sm">
+                            <div className="flex justify-between">
+                                <span className="font-medium">ID</span>
+                                <span>{selectedServiceRequest.id_service_request}</span>
                             </div>
 
-                            {/* Keterangan */}
-                            <div>
-                                <label className="block mb-1 font-medium">
-                                    Keterangan
-                                </label>
-                                <textarea
-                                    className="w-full border rounded px-3 py-2"
-                                    rows={3}
-                                    value={formCreate.keterangan}
-                                    onChange={(e) =>
-                                        setFormCreate({
-                                            ...formCreate,
-                                            keterangan: e.target.value,
-                                        })
-                                    }
-                                />
+                            <div className="flex justify-between">
+                                <span className="font-medium">Nama Pelanggan</span>
+                                <span>{selectedServiceRequest.nama_pelanggan}</span>
                             </div>
 
-                            {/* Tanggal */}
+                            <div>
+                                <span className="font-medium block mb-1">Keterangan</span>
+                                <p className="bg-gray-100 p-2 rounded line-clamp-3">
+                                    {selectedServiceRequest.keterangan}
+                                </p>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block mb-1 font-medium">
-                                        Tanggal Mulai
-                                    </label>
-                                    <input
-                                        type="date"
-                                        className="w-full border rounded px-3 py-2"
-                                        value={formCreate.tanggal_mulai}
-                                        onChange={(e) =>
-                                            setFormCreate({
-                                                ...formCreate,
-                                                tanggal_mulai: e.target.value,
-                                            })
-                                        }
-                                    />
+                                    <span className="font-medium block">Tanggal Mulai</span>
+                                    <span>
+                                        {formatDateDDMMYYYY(selectedServiceRequest.tanggal_mulai)}
+                                    </span>
                                 </div>
 
                                 <div>
-                                    <label className="block mb-1 font-medium">
-                                        Tanggal Selesai
-                                    </label>
-                                    <input
-                                        type="date"
-                                        className="w-full border rounded px-3 py-2"
-                                        value={formCreate.tanggal_selesai}
-                                        onChange={(e) =>
-                                            setFormCreate({
-                                                ...formCreate,
-                                                tanggal_selesai: e.target.value,
-                                            })
-                                        }
-                                    />
+                                    <span className="font-medium block">Tanggal Selesai</span>
+                                    <span>
+                                        {formatDateDDMMYYYY(selectedServiceRequest.tanggal_selesai)}
+                                    </span>
                                 </div>
                             </div>
 
-                            {/* Harga */}
-                            <div>
-                                <label className="block mb-1 font-medium">
-                                    Harga
-                                </label>
-                                <input
-                                    type="number"
-                                    className="w-full border rounded px-3 py-2"
-                                    placeholder="Masukkan harga"
-                                    value={formCreate.harga}
-                                    onChange={(e) =>
-                                        setFormCreate({
-                                            ...formCreate,
-                                            harga: e.target.value,
-                                        })
-                                    }
-                                />
+                            <div className="flex justify-between">
+                                <span className="font-medium">Status</span>
+                                <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs">
+                                    {selectedServiceRequest.status}
+                                </span>
                             </div>
 
+                            <div className="flex justify-between">
+                                <span className="font-medium">Harga</span>
+                                <span className="font-semibold">
+                                    Rp {Number(selectedServiceRequest.harga).toLocaleString("id-ID")}
+                                </span>
+                            </div>
+
+                            {/* Warning */}
+                            <div className="bg-yellow-50 text-yellow-800 text-xs p-3 rounded">
+                                Setelah diambil, service request ini akan berstatus
+                                <strong> ON PROGRESS </strong>
+                                dan tidak bisa diambil oleh teknisi lain.
+                            </div>
                         </div>
 
                         {/* Footer */}
                         <div className="flex justify-end gap-2 mt-6">
                             <Button
                                 variant="outline"
-                                onClick={() => setShowCreate(false)}
+                                onClick={() => {
+                                    setShowTakeService(false)
+                                    setSelectedServiceRequest(null)
+                                }}
                             >
                                 Batal
                             </Button>
 
                             <Button
                                 className="bg-green-500 hover:bg-green-600 text-white"
-                                onClick={handleCreateServiceRequest}
+                                onClick={handleTakeService}
+                                disabled={selectedServiceRequest.id_teknisi === admin?.id_teknisi || selectedServiceRequest.id_teknisi !== null ? true : false}
                             >
-                                Simpan
+                                Ambil Service
                             </Button>
                         </div>
                     </div>
@@ -592,7 +511,7 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
             {
                 notification.visible && (
                     <div
-                        className={`flex items-center gap-2 fixed bottom-15 right-5 z-50 px-4 py-3 rounded-md shadow-lg text-white transition-all
+                        className={`flex items-center gap-2 fixed bottom-5 right-5 z-50 px-4 py-3 rounded-md shadow-lg text-white transition-all
                             ${notification.type === "success"
                                 ? "bg-green-500"
                                 : "bg-red-500"
@@ -607,4 +526,4 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
     )
 }
 
-export default ServiceRequestEmployee
+export default ServiceRequestTechnician

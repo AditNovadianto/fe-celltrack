@@ -18,7 +18,7 @@ const SignIn = () => {
         e.preventDefault()
 
         try {
-            const response = await fetch(role === "Admin" || role === "Employee" ? `${import.meta.env.VITE_API_BASE_URL}/signInUsers` : `${import.meta.env.VITE_API_BASE_URL}/signInSuppliers`, {
+            const response = await fetch(role === "Admin" || role === "Employee" ? `${import.meta.env.VITE_API_BASE_URL}/signInUsers` : role === "Supplier" ? `${import.meta.env.VITE_API_BASE_URL}/signInSuppliers` : `${import.meta.env.VITE_API_BASE_URL}/signInTechnicians`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -36,7 +36,7 @@ const SignIn = () => {
             const data = await response.json()
 
             sessionStorage.setItem("token", data.token)
-            localStorage.setItem("user", JSON.stringify(role === "Admin" || role === "Employee" ? data.user : data.supplier))
+            localStorage.setItem("user", JSON.stringify(role === "Admin" || role === "Employee" ? data.user : role === "Supplier" ? data.supplier : data.teknisi))
 
             navigate("/dashboard")
         } catch (error) {
@@ -66,6 +66,7 @@ const SignIn = () => {
                                     <DropdownMenuRadioItem className="text-black hover:bg-gray-300 transition-all cursor-pointer px-2 py-1" value="Admin">Admin</DropdownMenuRadioItem>
                                     <DropdownMenuRadioItem className="text-black hover:bg-gray-300 transition-all cursor-pointer px-2 py-1" value="Employee">Employee</DropdownMenuRadioItem>
                                     <DropdownMenuRadioItem className="text-black hover:bg-gray-300 transition-all cursor-pointer px-2 py-1" value="Supplier">Supplier</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem className="text-black hover:bg-gray-300 transition-all cursor-pointer px-2 py-1" value="Technician">Technician</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>

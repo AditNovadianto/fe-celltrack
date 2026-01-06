@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage, BreadcrumbLink, BreadcrumbSeparator } from "../ui/breadcrumb";
 import profilePicture from "../../images/profile-picture.png"
-import { Bell, Box, Building2, HandCoins, ReceiptText, Settings, Users } from "lucide-react";
+import { Bell, Box, Building2, Hammer, HandCoins, ReceiptText, Settings, Users } from "lucide-react";
 
 type DashboardAdminProps = {
     setSection: (section: string) => void
@@ -17,6 +17,7 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
     const [totalSuppliers, setTotalSuppliers] = useState(0);
     const [totalTransactions, setTotalTransactions] = useState(0);
     const [totalServiceRequests, setTotalServiceRequests] = useState(0);
+    const [totalTechnicians, setTotalTechnicians] = useState(0);
     const [notifications, setNotifications] = useState<{ readBy?: { role: string, id: number, readAt?: Date; }[] }[]>([]);
 
     const navigate = useNavigate();
@@ -186,6 +187,30 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
             }
         }
 
+        const getAllTechnicians = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllTechnicians`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                    }
+                })
+
+                if (!response.ok) {
+                    throw new Error("Get Technicians gagal")
+                }
+
+                const data = await response.json()
+
+                console.log("Technicians", data)
+
+                setTotalTechnicians(data.technicians.length)
+            } catch (error) {
+                console.error(error)
+            }
+        }
+
         const getAllNotifications = async () => {
             try {
                 const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllNotifications`, {
@@ -216,6 +241,7 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
         getAllSuppliers();
         getAllTransactions();
         getAllServiceRequests();
+        getAllTechnicians();
         getAllNotifications();
     }, [])
 
@@ -330,6 +356,18 @@ const DashboardAdmin: React.FC<DashboardAdminProps> = ({ setSection }) => {
                             <p className="font-semibold text-2xl">Total Service Requests</p>
 
                             <p className="text-3xl font-semibold">{totalServiceRequests}</p>
+                        </div>
+                    </div>
+
+                    <div className="hover:scale-103 transition-all cursor-pointer w-full sm:w-[48%] xl:w-[23%] flex items-center gap-5  bg-linear-to-tr from-sky-500 to-blue-500  p-5 rounded-lg text-white mt-5 shadow-lg">
+                        <div className="w-10 h-10 rounded-full bg-slate-400 flex items-center justify-center">
+                            <Hammer />
+                        </div>
+
+                        <div>
+                            <p className="font-semibold text-2xl">Total Technicians</p>
+
+                            <p className="text-3xl font-semibold">{totalTechnicians}</p>
                         </div>
                     </div>
                 </div>
