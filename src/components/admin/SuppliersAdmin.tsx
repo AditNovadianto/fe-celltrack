@@ -143,7 +143,7 @@ const SuppliersAdmin: React.FC<SuppliersAdminProps> = ({ setSection }) => {
                         <div>
                             <p className="font-semibold">{admin?.nama_user}</p>
 
-                            <p>{admin?.id_role === 1 ? "Admin" : "User"}</p>
+                            <p>{admin?.id_role === 1 ? "Admin" : "Employee"}</p>
                         </div>
                     </div>
                 </div>

@@ -260,7 +260,7 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                         <div>
                             <p className="font-semibold">{admin?.nama_user}</p>
 
-                            <p>{admin?.id_role === 1 ? "Admin" : "User"}</p>
+                            <p>{admin?.id_role === 1 ? "Admin" : "Employee"}</p>
                         </div>
                     </div>
                 </div>
@@ -419,6 +419,11 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                                 <span className="font-semibold">
                                     Rp {Number(selectedServiceRequest.harga).toLocaleString("id-ID")}
                                 </span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="font-medium">Status Pembayaran</span>
+                                <span className="font-semibold">{selectedServiceRequest.status_pembayaran}</span>
                             </div>
                         </div>
 

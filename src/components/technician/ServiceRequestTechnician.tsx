@@ -387,6 +387,11 @@ const ServiceRequestTechnician: React.FC<ServiceRequestTechnician> = ({ setSecti
                                     Rp {Number(selectedServiceRequest.harga).toLocaleString("id-ID")}
                                 </span>
                             </div>
+
+                            <div className="flex justify-between">
+                                <span className="font-medium">Status Pembayaran</span>
+                                <span className="font-semibold">{selectedServiceRequest.status_pembayaran}</span>
+                            </div>
                         </div>
 
                         {/* Footer */}
