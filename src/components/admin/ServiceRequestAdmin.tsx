@@ -24,6 +24,7 @@ const ServiceRequestAdmin: React.FC<ServiceRequestAdmin> = ({ setSection }) => {
     const [notifications, setNotifications] = useState<{ readBy?: { role: string, id: number, readAt?: Date; }[] }[]>([]);
     const [serviceRequests, setServiceRequests] = useState<{ id_service_request?: number, nama_pelanggan?: string, keterangan?: string, tanggal_mulai?: string, tanggal_selesai?: string, status?: string, harga?: string }[]>([])
     const [selectedServiceRequest, setSelectedServiceRequest] = useState<any>(null)
+    const [technicians, setTechnicians] = useState<{ id_teknisi: number, nama_teknisi: string }[]>([])
     const [showDetail, setShowDetail] = useState(false);
 
     const navigate = useNavigate()
@@ -81,6 +82,30 @@ const ServiceRequestAdmin: React.FC<ServiceRequestAdmin> = ({ setSection }) => {
             }
         }
 
+        const getAllTechnicians = async () => {
+            try {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllTechnicians`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionStorage.getItem("token")}`
+                    }
+                })
+
+                if (!response.ok) {
+                    throw new Error("Get Technicians gagal")
+                }
+
+                const data = await response.json()
+
+                console.log("Technicians", data)
+
+                setTechnicians(data.technicians)
+            } catch (error) {
+                console.error(error)
+            }
+        }
+
         const getAllNotifications = async () => {
             try {
                 const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/getAllNotifications`, {
@@ -106,6 +131,7 @@ const ServiceRequestAdmin: React.FC<ServiceRequestAdmin> = ({ setSection }) => {
         }
 
         getAllServiceRequests();
+        getAllTechnicians();
         getAllNotifications();
     }, [showDetail])
 
@@ -261,6 +287,11 @@ const ServiceRequestAdmin: React.FC<ServiceRequestAdmin> = ({ setSection }) => {
                             </div>
 
                             <div className="flex justify-between">
+                                <span className="font-medium">Kode Service</span>
+                                <span className="">{selectedServiceRequest.kode_service}</span>
+                            </div>
+
+                            <div className="flex justify-between">
                                 <span className="font-medium">Nama Pelanggan</span>
                                 <span>{selectedServiceRequest.nama_pelanggan}</span>
                             </div>
@@ -288,6 +319,18 @@ const ServiceRequestAdmin: React.FC<ServiceRequestAdmin> = ({ setSection }) => {
                                 <span className="font-medium">Status</span>
                                 <span className={`${selectedServiceRequest.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : selectedServiceRequest.status === "ON PROGRESS" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"} px-2 py-1 rounded text-xs`}>
                                     {selectedServiceRequest.status}
+                                </span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="font-medium">Diambil Oleh</span>
+                                <span className="font-semibold">
+                                    {
+                                        technicians.find(
+                                            (technician) =>
+                                                technician.id_teknisi === selectedServiceRequest.id_teknisi
+                                        )?.nama_teknisi || "-"
+                                    }
                                 </span>
                             </div>
 

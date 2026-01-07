@@ -352,6 +352,11 @@ const TasksTechnicians: React.FC<TasksTechnicians> = ({ setSection }) => {
                             </div>
 
                             <div className="flex justify-between">
+                                <span className="font-medium">Kode Service</span>
+                                <span className="">{selectedServiceRequest.kode_service}</span>
+                            </div>
+
+                            <div className="flex justify-between">
                                 <span className="font-medium">Nama Pelanggan</span>
                                 <span>{selectedServiceRequest.nama_pelanggan}</span>
                             </div>
