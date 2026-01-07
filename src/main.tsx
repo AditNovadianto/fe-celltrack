@@ -8,6 +8,7 @@ import ForgotPassword from './pages/ForgotPassword.tsx'
 import Dashboard from './pages/Dashboard.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
 import NotFound from './pages/NotFound.tsx'
+import SignInCustomer from './pages/SignInCustomer.tsx'
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: '/forgot-password',
     element: <ForgotPassword />
+  },
+  {
+    path: '/signInCustomer',
+    element: <SignInCustomer />
   },
   {
     element: <ProtectedRoute />,

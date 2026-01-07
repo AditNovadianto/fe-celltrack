@@ -251,7 +251,7 @@ const TransactionsEmployee: React.FC<TransactionsEmployeeProps> = ({ setSection 
                 visible: true
             })
 
-            showNotification("Customer berhasil ditambahkan", "success");
+            showNotification("Transaksi berhasil dibuat", "success");
         } catch (error) {
             console.error(error)
         }

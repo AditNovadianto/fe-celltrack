@@ -250,7 +250,7 @@ const ServiceRequestTechnician: React.FC<ServiceRequestTechnician> = ({ setSecti
                                 <TableCell>{serviceRequest.keterangan}</TableCell>
                                 <TableCell>{formatDateDDMMYYYY(serviceRequest.tanggal_mulai)}</TableCell>
                                 <TableCell>{formatDateDDMMYYYY(serviceRequest.tanggal_selesai)}</TableCell>
-                                <TableCell><span className={`${serviceRequest.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : serviceRequest.status === "ON PROGRESS" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"} px-2 py-1 rounded text-xs`}>{serviceRequest.status}</span></TableCell>
+                                <TableCell><span className={`${serviceRequest.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : serviceRequest.status === "ON PROGRESS" ? "bg-blue-100 text-blue-700" : serviceRequest.status === "DONE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"} px-2 py-1 rounded text-xs`}>{serviceRequest.status}</span></TableCell>
                                 <TableCell>{Number(serviceRequest.harga).toLocaleString("id-ID")}</TableCell>
                                 <TableCell className="space-x-2">
                                     <Button
@@ -364,7 +364,7 @@ const ServiceRequestTechnician: React.FC<ServiceRequestTechnician> = ({ setSecti
 
                             <div className="flex justify-between">
                                 <span className="font-medium">Status</span>
-                                <span className={`${selectedServiceRequest.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : selectedServiceRequest.status === "ON PROGRESS" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"} px-2 py-1 rounded text-xs`}>
+                                <span className={`${selectedServiceRequest.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : selectedServiceRequest.status === "ON PROGRESS" ? "bg-blue-100 text-blue-700" : selectedServiceRequest.status === "DONE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"} px-2 py-1 rounded text-xs`}>
                                     {selectedServiceRequest.status}
                                 </span>
                             </div>
@@ -504,7 +504,7 @@ const ServiceRequestTechnician: React.FC<ServiceRequestTechnician> = ({ setSecti
                             <Button
                                 className="bg-green-500 hover:bg-green-600 text-white"
                                 onClick={handleTakeService}
-                                disabled={selectedServiceRequest.id_teknisi === admin?.id_teknisi || selectedServiceRequest.id_teknisi !== null ? true : false}
+                                disabled={selectedServiceRequest.id_teknisi === admin?.id_teknisi || selectedServiceRequest.id_teknisi !== null || selectedServiceRequest.status === "CANCELED" ? true : false}
                             >
                                 Ambil Service
                             </Button>

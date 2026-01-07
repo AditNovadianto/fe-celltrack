@@ -24,6 +24,7 @@ import NotificationsTechnicians from "@/components/NotificationsTechnicians"
 import TechniciansAdmin from "@/components/admin/TechniciansAdmin"
 import ServiceRequestTechnician from "@/components/technician/ServiceRequestTechnician"
 import TasksTechnicians from "@/components/technician/TasksTechnicians"
+import DashboardCustomer from "@/components/customer/DashboardCustomer"
 
 const Dashboard = () => {
     const [section, setSection] = useState("Dashboard")
@@ -40,6 +41,8 @@ const Dashboard = () => {
                 setUser("Supplier");
             } else if (userObj.hasOwnProperty("id_teknisi")) {
                 setUser("Technician");
+            } else if (userObj.hasOwnProperty("id_pelanggan")) {
+                setUser("Customer")
             } else {
                 if (userObj.id_role === 1) {
                     setUser("Admin");
@@ -53,6 +56,12 @@ const Dashboard = () => {
     const logOutHandler = () => {
         sessionStorage.removeItem("token")
         localStorage.removeItem("user")
+
+        if (user === "Customer") {
+            localStorage.removeItem("serviceRequest")
+            navigate("/signInCustomer")
+            return
+        }
 
         navigate("/")
     }
@@ -105,6 +114,10 @@ const Dashboard = () => {
                         <Button className={`${section === "Services" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Services")}><Settings /> {!isHovered ? '' : 'Services'}</Button>
 
                         <Button className={`${section === "Tasks" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Tasks")}><ListTodo /> {!isHovered ? '' : 'Tasks'}</Button>
+                    </div>
+
+                    <div className={`${user === "Customer" ? 'flex' : 'hidden'} w-full flex-col gap-5`}>
+                        <Button className={`${section === "Dashboard" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Dashboard")}><LayoutDashboard /> {!isHovered ? '' : 'Dashboard'}</Button>
                     </div>
 
                     <div className="w-full">
@@ -280,6 +293,26 @@ const Dashboard = () => {
                         <Button className={`${section === "Services" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Services")}><ReceiptText /></Button>
 
                         <Button className={`${section === "Tasks" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Tasks")}><ReceiptText /></Button>
+                    </div>
+                </>
+            )}
+            {/*  */}
+
+            {/* Customer Dashboard Content */}
+            {user === "Customer" && (
+                <div className="border border-red-500 w-full h-full">
+                    {section === "Dashboard" && <DashboardCustomer />}
+                </div>
+            )}
+
+            {user === "Customer" && (
+                <>
+                    <div className="hidden md:flex lg:hidden items-center justify-around w-full p-5 fixed bottom-0 left-0 right-0 bg-sky-950">
+                        <Button className={`${section === "Dashboard" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Dashboard")}><LayoutDashboard /> Dashboard</Button>
+                    </div>
+
+                    <div className="flex md:hidden items-center justify-around w-full p-5 fixed bottom-0 left-0 right-0 bg-sky-950">
+                        <Button className={`${section === "Dashboard" ? "bg-white/50 hover:bg-white/30" : "bg-transparent hover:bg-white/20"} cursor-pointer flex justify-start`} onClick={() => setSection("Dashboard")}><LayoutDashboard /></Button>
                     </div>
                 </>
             )}

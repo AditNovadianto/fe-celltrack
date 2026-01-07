@@ -29,6 +29,7 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
     const [technicians, setTechnicians] = useState<{ id_teknisi: number, nama_teknisi: string }[]>([])
     const [showDetail, setShowDetail] = useState(false);
     const [showCreate, setShowCreate] = useState(false);
+    const [showCanceled, setShowCanceled] = useState(false)
     const [formCreate, setFormCreate] = useState({
         nama_pelanggan: "",
         keterangan: "",
@@ -168,7 +169,7 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
         getAllCustomers();
         getAllTechnicians();
         getAllNotifications();
-    }, [showDetail, showCreate])
+    }, [showDetail, showCreate, showCanceled])
 
     console.log(serviceRequests)
 
@@ -205,6 +206,37 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
         } catch (error) {
             console.error(error)
             alert("Gagal membuat Service Request")
+        }
+    }
+
+    const handleCancelServiceRequest = async () => {
+        if (!selectedServiceRequest?.id_service_request) return
+
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_API_BASE_URL}/cancelServiceRequest`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify({
+                        id_service_request: selectedServiceRequest.id_service_request,
+                    }),
+                }
+            )
+
+            if (!response.ok) {
+                throw new Error("Cancel Service Request gagal")
+            }
+
+            setShowCanceled(false)
+            setSelectedServiceRequest(null)
+            showNotification("Service Request berhasil dibatalkan", "success")
+        } catch (error) {
+            console.error(error)
+            showNotification("Gagal membatalkan Service Request", "error")
         }
     }
 
@@ -289,7 +321,7 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                                 <TableCell>{serviceRequest.keterangan}</TableCell>
                                 <TableCell>{formatDateDDMMYYYY(serviceRequest.tanggal_mulai)}</TableCell>
                                 <TableCell>{formatDateDDMMYYYY(serviceRequest.tanggal_selesai)}</TableCell>
-                                <TableCell><span className={`${serviceRequest.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : serviceRequest.status === "ON PROGRESS" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"} px-2 py-1 rounded text-xs`}>{serviceRequest.status}</span></TableCell>
+                                <TableCell><span className={`${serviceRequest.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : serviceRequest.status === "ON PROGRESS" ? "bg-blue-100 text-blue-700" : serviceRequest.status === "DONE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"} px-2 py-1 rounded text-xs`}>{serviceRequest.status}</span></TableCell>
                                 <TableCell>{Number(serviceRequest.harga).toLocaleString("id-ID")}</TableCell>
                                 <TableCell className="space-x-2">
                                     <Button
@@ -302,6 +334,18 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                                         }}
                                     >
                                         <Eye />
+                                    </Button>
+
+                                    <Button
+                                        size="sm"
+                                        className="bg-red-500 text-white hover:bg-red-600 cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedServiceRequest(serviceRequest);
+
+                                            setShowCanceled(true);
+                                        }}
+                                    >
+                                        <X />
                                     </Button>
                                 </TableCell>
                             </TableRow>
@@ -372,6 +416,11 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                             </div>
 
                             <div className="flex justify-between">
+                                <span className="font-medium">Kode Service</span>
+                                <span className="">{selectedServiceRequest.kode_service}</span>
+                            </div>
+
+                            <div className="flex justify-between">
                                 <span className="font-medium">Nama Pelanggan</span>
                                 <span>{selectedServiceRequest.nama_pelanggan}</span>
                             </div>
@@ -397,7 +446,7 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
 
                             <div className="flex justify-between">
                                 <span className="font-medium">Status</span>
-                                <span className={`${selectedServiceRequest.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : selectedServiceRequest.status === "ON PROGRESS" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"} px-2 py-1 rounded text-xs`}>
+                                <span className={`${selectedServiceRequest.status === "PENDING" ? "bg-yellow-100 text-yellow-700" : selectedServiceRequest.status === "ON PROGRESS" ? "bg-blue-100 text-blue-700" : selectedServiceRequest.status === "DONE" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"} px-2 py-1 rounded text-xs`}>
                                     {selectedServiceRequest.status}
                                 </span>
                             </div>
@@ -588,6 +637,62 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
                                 onClick={handleCreateServiceRequest}
                             >
                                 Simpan
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showCanceled && selectedServiceRequest && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg w-150 relative">
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-semibold text-red-600">
+                                Batalkan Service Request
+                            </h2>
+
+                            <Button
+                                variant="destructive"
+                                onClick={() => {
+                                    setShowCanceled(false)
+                                }}
+                            >
+                                <X />
+                            </Button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="space-y-4 text-sm">
+                            <p>
+                                Apakah Anda yakin ingin membatalkan service request berikut?
+                            </p>
+
+                            <div className="bg-gray-100 p-3 rounded">
+                                <p><b>ID:</b> {selectedServiceRequest.id_service_request}</p>
+                                <p><b>Pelanggan:</b> {selectedServiceRequest.nama_pelanggan}</p>
+                                <p><b>Keterangan:</b> {selectedServiceRequest.keterangan}</p>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex justify-end gap-2 mt-6">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShowCanceled(false)
+                                }}
+                            >
+                                Batal
+                            </Button>
+
+                            <Button
+                                className="bg-red-500 hover:bg-red-600 text-white"
+                                onClick={handleCancelServiceRequest}
+                                disabled={selectedServiceRequest.status === "CANCELED" ? true : false}
+                            >
+                                Ya, Batalkan
                             </Button>
                         </div>
                     </div>
