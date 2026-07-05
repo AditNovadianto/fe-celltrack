@@ -12,7 +12,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "../ui/button"
-import { Bell, Eye, X } from "lucide-react";
+import { Bell, Check, Download, Eye, X } from "lucide-react";
 
 type ProductsEmployeeProps = {
     setSection: (section: string) => void
@@ -28,6 +28,7 @@ const ProductsEmployee: React.FC<ProductsEmployeeProps> = ({ setSection }) => {
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [showDetail, setShowDetail] = useState(false);
     const [notifications, setNotifications] = useState<{ readBy?: { role: string, id: number, readAt?: Date; }[] }[]>([]);
+    const [notification, setNotification] = useState<{ visible: boolean; message: string; type: "success" | "error" }>({ visible: false, message: "", type: "success" });
 
     const navigate = useNavigate();
 
@@ -140,6 +141,51 @@ const ProductsEmployee: React.FC<ProductsEmployeeProps> = ({ setSection }) => {
         getAllNotifications();
     }, [])
 
+    const showNotification = (message: string, type: "success" | "error") => {
+        setNotification({ visible: true, message, type });
+
+        setTimeout(() => {
+            setNotification({ visible: false, message: "", type });
+        }, 3000);
+    }
+
+    const handleExportExcel = async () => {
+        try {
+            const token = sessionStorage.getItem("token");
+
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/exportExcel`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log("Export error:", errorText);
+                throw new Error("Gagal export");
+            }
+
+            const blob = await response.blob();
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = `laporan-products-${Date.now()}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+            showNotification("Data products berhasil di export", "success")
+        } catch (error) {
+            console.error(error);
+            showNotification("Gagal export Excel", "error")
+        }
+    };
+
     console.log("Products", products)
 
     return (
@@ -178,6 +224,17 @@ const ProductsEmployee: React.FC<ProductsEmployeeProps> = ({ setSection }) => {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div className="w-full mt-10 flex justify-end">
+                <button
+                    onClick={handleExportExcel}
+                    className="flex items-center gap-2 rounded-lg bg-green-500 cursor-pointer px-4 py-2 text-white font-medium hover:bg-green-600 transition"
+                >
+                    <Download size={18} />
+
+                    Export Excel
+                </button>
             </div>
 
             <div className="mt-10">
@@ -349,6 +406,21 @@ const ProductsEmployee: React.FC<ProductsEmployeeProps> = ({ setSection }) => {
                     </div>
                 </div>
             )}
+
+            {
+                notification.visible && (
+                    <div
+                        className={`flex items-center gap-2 fixed bottom-15 right-5 z-50 px-4 py-3 rounded-md shadow-lg text-white transition-all
+                                        ${notification.type === "success"
+                                ? "bg-green-500"
+                                : "bg-red-500"
+                            }`}
+                    >
+                        {notification.type === "success" ? <Check /> : <X />}
+                        {notification.message}
+                    </div>
+                )
+            }
         </div>
     )
 }

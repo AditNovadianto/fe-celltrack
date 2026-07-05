@@ -205,7 +205,7 @@ const ServiceRequestEmployee: React.FC<ServiceRequestEmployee> = ({ setSection }
             showNotification("Create Service Request Berhasil", "success")
         } catch (error) {
             console.error(error)
-            alert("Gagal membuat Service Request")
+            showNotification("Gagal membuat Service Request", "error")
         }
     }
 
