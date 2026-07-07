@@ -185,6 +185,188 @@ npm run build
 
 Folder hasil build Vite berada di `dist/`. Untuk deployment mandiri, arahkan web server ke folder `dist/` dan pastikan fallback route untuk Single Page Application diarahkan ke `index.html`.
 
+
+### 12.1 Deployment Menggunakan Docker
+
+Selain dideploy secara manual dengan menjalankan `npm run build` lalu menyalin folder `dist/` ke web server, frontend CellTrack juga dapat dijalankan menggunakan Docker. Pada konfigurasi ini, proses deployment dibagi menjadi dua tahap, yaitu **build stage** menggunakan Node.js dan **production stage** menggunakan Nginx.
+
+Pendekatan multi-stage build digunakan agar image production menjadi lebih ringan. Dependency Node.js hanya digunakan pada tahap build, sedangkan hasil akhirnya hanya berisi file statis dari folder `dist/` yang disajikan oleh Nginx.
+
+#### Dockerfile
+
+```dockerfile
+# Tahap 1: Build Stage
+FROM node:22-alpine AS build-stage
+
+WORKDIR /app
+
+# 1. Deklarasikan ARG (Variable yang diterima saat build)
+ARG VITE_API_BASE_URL
+
+# 2. Set sebagai ENV agar bisa dibaca oleh Vite
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+# Saat perintah ini jalan, Vite sudah membaca isi VITE_API_BASE_URL
+RUN npm run build
+
+# Tahap 2: Production Stage
+FROM nginx:stable-alpine
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+Penjelasan Dockerfile:
+
+| Bagian | Penjelasan |
+| ------ | ---------- |
+| `FROM node:22-alpine AS build-stage` | Menggunakan Node.js versi 22 berbasis Alpine untuk proses build frontend. |
+| `WORKDIR /app` | Menentukan folder kerja di dalam container build. |
+| `ARG VITE_API_BASE_URL` | Menerima alamat backend API saat proses build image. |
+| `ENV VITE_API_BASE_URL=$VITE_API_BASE_URL` | Menjadikan nilai ARG sebagai environment variable agar dapat dibaca oleh Vite. |
+| `COPY package*.json ./` | Menyalin file dependency frontend. |
+| `RUN npm install` | Meng-install dependency yang dibutuhkan untuk proses build. |
+| `COPY . .` | Menyalin seluruh source code frontend ke dalam container. |
+| `RUN npm run build` | Membuat build production dan menghasilkan folder `dist/`. |
+| `FROM nginx:stable-alpine` | Menggunakan Nginx Alpine sebagai web server production. |
+| `COPY --from=build-stage /app/dist /usr/share/nginx/html` | Menyalin hasil build Vite ke folder default static file Nginx. |
+| `COPY nginx.conf /etc/nginx/conf.d/default.conf` | Menyalin konfigurasi Nginx untuk menyajikan aplikasi SPA. |
+| `EXPOSE 80` | Mendokumentasikan bahwa container frontend berjalan pada port 80. |
+| `CMD ["nginx", "-g", "daemon off;"]` | Menjalankan Nginx dalam mode foreground agar container tetap berjalan. |
+
+#### Docker Compose
+
+```yaml
+services:
+  app:
+    build:
+      context: .
+      args:
+        - VITE_API_BASE_URL=https://api.celltrack.my.id
+    container_name: celltrack-frontend
+    restart: always
+    networks:
+      - private-net
+
+networks:
+  private-net:
+    external: true
+```
+
+Penjelasan `docker-compose.yml`:
+
+| Bagian | Penjelasan |
+| ------ | ---------- |
+| `services.app` | Mendefinisikan service utama untuk frontend CellTrack. |
+| `build.context: .` | Docker melakukan build image dari folder project frontend. |
+| `args.VITE_API_BASE_URL` | Mengirim alamat backend API ke proses build Vite. |
+| `container_name: celltrack-frontend` | Menentukan nama container frontend. |
+| `restart: always` | Container otomatis restart jika terjadi crash atau server reboot. |
+| `networks: private-net` | Menghubungkan frontend ke Docker network yang sama dengan service lain, misalnya reverse proxy. |
+| `external: true` | Network `private-net` harus sudah dibuat sebelumnya pada Docker host. |
+
+#### Alur Deployment Docker Frontend
+
+```text
+Source Code Frontend
+        ↓
+Node.js Build Stage
+        ↓
+Vite membaca VITE_API_BASE_URL
+        ↓
+npm run build
+        ↓
+Folder dist/
+        ↓
+Nginx Production Stage
+        ↓
+Container celltrack-frontend
+        ↓
+Private Docker Network / Reverse Proxy
+        ↓
+User Browser
+```
+
+#### Langkah Menjalankan Frontend dengan Docker
+
+1. Pastikan Docker dan Docker Compose sudah terpasang di server.
+
+2. Clone repository frontend:
+
+```bash
+git clone https://github.com/AditNovadianto/fe-celltrack.git
+cd fe-celltrack
+```
+
+3. Pastikan file `nginx.conf` tersedia di root project karena file ini disalin ke konfigurasi Nginx container. Untuk aplikasi React berbasis SPA, konfigurasi Nginx perlu memiliki fallback ke `index.html` agar route seperti `/dashboard` tetap dapat dibuka langsung dari browser.
+
+Contoh konfigurasi dasar:
+
+```nginx
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+4. Pastikan Docker network eksternal sudah tersedia. Jika belum ada, buat dengan perintah berikut:
+
+```bash
+docker network create private-net
+```
+
+5. Sesuaikan nilai `VITE_API_BASE_URL` pada `docker-compose.yml` dengan URL backend API production:
+
+```yaml
+args:
+  - VITE_API_BASE_URL=https://api.celltrack.my.id
+```
+
+6. Build dan jalankan container:
+
+```bash
+docker compose up -d --build
+```
+
+7. Cek status container:
+
+```bash
+docker ps
+```
+
+8. Lihat log container frontend:
+
+```bash
+docker logs -f celltrack-frontend
+```
+
+9. Menghentikan container:
+
+```bash
+docker compose down
+```
+
+#### Catatan Penting Deployment Docker Frontend
+
+Variable `VITE_API_BASE_URL` harus dikirim saat proses build karena Vite menanamkan environment variable ke file JavaScript hasil build. Artinya, jika alamat backend API berubah, image frontend perlu di-build ulang agar nilai API base URL ikut berubah.
+
+Karena aplikasi frontend berjalan di browser, jangan menyimpan secret seperti password database, JWT secret, Midtrans server key, atau credential backend pada environment frontend. Environment variable frontend hanya boleh berisi konfigurasi yang aman diketahui client, seperti base URL API.
+
+Jika frontend berada di belakang reverse proxy, pastikan container `celltrack-frontend` berada pada network yang dapat dijangkau oleh reverse proxy. Pada konfigurasi ini, frontend menggunakan network eksternal `private-net`, sehingga network tersebut harus sudah tersedia sebelum container dijalankan.
+
 ## 13. Security and Access Control Notes
 
 - Gunakan `ProtectedRoute` untuk halaman yang membutuhkan autentikasi.
